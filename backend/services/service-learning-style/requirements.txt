@@ -5,12 +5,29 @@ pydantic==2.12.3
 pydantic-settings==2.7.0
 python-dotenv==1.2.1
 
-# Security
+# Database
+sqlalchemy>=2.0.36
+psycopg[binary]>=3.1.0
+alembic==1.14.0
+
+# Data Processing
+pandas>=2.2.0
+numpy>=1.26.0
+
+# Machine Learning
+scikit-learn>=1.4.0
+joblib>=1.3.0
+
+# Visualization (optional)
+matplotlib>=3.8.0
+seaborn>=0.13.0
+plotly>=5.18.0
+
+# Testing
+pytest>=7.4.0
+httpx>=0.28.1
+
+# Utilities
 python-multipart==0.0.20
 email-validator==2.3.0
-
-# HTTP client
-httpx==0.28.1
-
-# Optional: Remove if not needed
-# sentry-sdk==2.43.0  # Error tracking
+faker>=22.0.0
