@@ -1,0 +1,135 @@
+{
+  "model_type": "RandomForestClassifier",
+  "training_date": "2025-12-28T18:36:08.703008",
+  "num_features": 23,
+  "num_training_samples": 80,
+  "num_test_samples": 20,
+  "accuracy": 0.85,
+  "classes": [
+    "Auditory",
+    "Kinesthetic",
+    "Mixed",
+    "Reading",
+    "Visual"
+  ],
+  "feature_names": [
+    "visual_time_ratio",
+    "reading_time_ratio",
+    "audio_time_ratio",
+    "kinesthetic_time_ratio",
+    "visual_interaction_score",
+    "social_interaction_score",
+    "kinesthetic_interaction_score",
+    "video_engagement_depth",
+    "reading_engagement_depth",
+    "audio_engagement_depth",
+    "note_taking_intensity",
+    "visual_preference_score",
+    "reading_preference_score",
+    "auditory_preference_score",
+    "kinesthetic_preference_score",
+    "activity_diversity",
+    "engagement_balance",
+    "video_vs_text_ratio",
+    "active_vs_passive_ratio",
+    "social_learning_score",
+    "visual_aid_dependency",
+    "video_completion_rate",
+    "login_count"
+  ],
+  "feature_importance": [
+    {
+      "feature": "video_engagement_depth",
+      "importance": 0.13801655633033
+    },
+    {
+      "feature": "visual_time_ratio",
+      "importance": 0.09753588290797968
+    },
+    {
+      "feature": "auditory_preference_score",
+      "importance": 0.09070888270721876
+    },
+    {
+      "feature": "audio_time_ratio",
+      "importance": 0.08899759382314902
+    },
+    {
+      "feature": "kinesthetic_time_ratio",
+      "importance": 0.08502428537934534
+    },
+    {
+      "feature": "active_vs_passive_ratio",
+      "importance": 0.08430838678998867
+    },
+    {
+      "feature": "video_vs_text_ratio",
+      "importance": 0.08264955834104311
+    },
+    {
+      "feature": "visual_preference_score",
+      "importance": 0.0752051115844297
+    },
+    {
+      "feature": "activity_diversity",
+      "importance": 0.053005393756065756
+    },
+    {
+      "feature": "audio_engagement_depth",
+      "importance": 0.04968810239769765
+    },
+    {
+      "feature": "reading_time_ratio",
+      "importance": 0.04912745412946832
+    },
+    {
+      "feature": "reading_engagement_depth",
+      "importance": 0.04321793818139204
+    },
+    {
+      "feature": "engagement_balance",
+      "importance": 0.01856401001864389
+    },
+    {
+      "feature": "video_completion_rate",
+      "importance": 0.008532609000550482
+    },
+    {
+      "feature": "visual_aid_dependency",
+      "importance": 0.007296399932524199
+    },
+    {
+      "feature": "kinesthetic_interaction_score",
+      "importance": 0.006690489442229076
+    },
+    {
+      "feature": "kinesthetic_preference_score",
+      "importance": 0.006048238632346231
+    },
+    {
+      "feature": "note_taking_intensity",
+      "importance": 0.0037369596075659105
+    },
+    {
+      "feature": "login_count",
+      "importance": 0.0034219981987208656
+    },
+    {
+      "feature": "reading_preference_score",
+      "importance": 0.003169531693861773
+    },
+    {
+      "feature": "visual_interaction_score",
+      "importance": 0.0029927185758181884
+    },
+    {
+      "feature": "social_interaction_score",
+      "importance": 0.002061898569631175
+    },
+    {
+      "feature": "social_learning_score",
+      "importance": 0.0
+    }
+  ],
+  "version": "1.0"
+}
