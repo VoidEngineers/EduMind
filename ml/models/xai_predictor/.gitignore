@@ -1,0 +1,19 @@
+# Dataset files - too large for Git
+CSV/
+*.csv
+
+# Model artifacts - generated during training
+models/
+*.joblib
+*.pkl
+*.keras
+*.h5
+
+# Training logs
+catboost_info/
+*.log
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
