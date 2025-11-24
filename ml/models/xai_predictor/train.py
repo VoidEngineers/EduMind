@@ -53,7 +53,7 @@ def build_neural_network(input_dim, num_classes):
     print("\nBuilding Neural Network with Epoch Training...")
     
     model = Sequential([
-        Dense(512, activation='relu', input_shape=(input_dim,), kernel_regularizer=regularizers.l2(0.001)),
+        Dense(512, activation='relu', input_dim=input_dim, kernel_regularizer=regularizers.l2(0.001)),
         BatchNormalization(),
         Dropout(0.3),
         
@@ -74,7 +74,7 @@ def build_neural_network(input_dim, num_classes):
         Dropout(0.2),
         
         Dense(num_classes, activation='softmax')
-    ])
+    ], name='student_outcome_predictor')
     
     optimizer = AdamW(learning_rate=0.001, weight_decay=0.0001)
     model.compile(
