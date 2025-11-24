@@ -7,18 +7,20 @@
         "packages/*"
     ],
     "scripts": {
-        "build": "turbo run build",
-        "dev": "turbo run dev",
-        "lint": "turbo run lint",
-        "test": "turbo run test",
-        "clean": "turbo run clean",
+        "build": "nx run-many --target=build --all --parallel",
+        "dev": "nx run-many --target=dev --all --parallel",
+        "lint": "nx run-many --target=lint --all --parallel",
+        "test": "nx run-many --target=test --all --parallel",
+        "clean": "nx run-many --target=clean --all --parallel",
         "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,py}\"",
-        "type-check": "turbo run type-check"
+        "type-check": "nx run-many --target=type-check --all --parallel",
+        "nx": "nx",
+        "migrate:nx": "npx nx migrate latest"
     },
     "devDependencies": {
-        "turbo": "^1.10.16",
-        "prettier": "^3.0.0",
-        "@turbo/gen": "^1.10.16"
+        "nx": "22.1.1",
+        "@nx/workspace": "22.1.1",
+        "prettier": "^3.0.0"
     },
     "engines": {
         "node": ">=18.0.0",
