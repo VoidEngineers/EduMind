@@ -1,5 +1,7 @@
 # Turborepo Monorepo Configuration Summary
 
+> This document describes the previous Turborepo setup. The repository has been migrated to Nx. See `Docs/NX_SETUP.md` for the new workflow and commands.
+
 ## What Has Been Configured
 
 The EduMind project has been successfully converted to a Turborepo monorepo structure. Here's what has been set up:
