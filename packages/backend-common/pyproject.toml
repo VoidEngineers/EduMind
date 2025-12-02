@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "backend-common"
+version = "0.1.0"
+description = "Shared utilities for EduMind backend services"
+authors = [
+    {name = "EduMind Team", email = "dev@edumind.com"},
+]
+dependencies = [
+    "fastapi",
+    "pydantic",
+    "pydantic-settings",
+    "sqlalchemy",
+    "python-jose[cryptography]",
+    "passlib[bcrypt]",
+    "structlog",
+]
+requires-python = ">=3.9"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["backend_common*"]

@@ -1,0 +1,95 @@
+version: "3.8"
+
+services:
+  # --- Infrastructure ---
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_DB: edumind
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - edumind-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - edumind-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # --- Microservices ---
+  user-service:
+    build:
+      context: .
+      dockerfile: backend/services/user-service/Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres_password@postgres:5432/edumind
+      - REDIS_URL=redis://redis:6379
+      - SERVICE_NAME=user-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - edumind-network
+
+  course-service:
+    build:
+      context: .
+      dockerfile: backend/services/course-service/Dockerfile
+    ports:
+      - "8002:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres_password@postgres:5432/edumind
+      - REDIS_URL=redis://redis:6379
+      - SERVICE_NAME=course-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - edumind-network
+
+  xai-service:
+    build:
+      context: .
+      dockerfile: backend/services/service-xai-prediction/Dockerfile
+    ports:
+      - "8003:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres_password@postgres:5432/edumind
+      - REDIS_URL=redis://redis:6379
+      - SERVICE_NAME=xai-prediction-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - edumind-network
+
+volumes:
+  postgres_data:
+
+networks:
+  edumind-network:
+    driver: bridge
