@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Quick test script for backend service"""
 
-import time
 import sys
+import time
 
 print("=" * 60)
 print("BACKEND SERVICE QUICK TEST")
@@ -12,8 +12,8 @@ print("=" * 60)
 print("\n[1/4] Testing basic imports...")
 start = time.time()
 try:
-    import xgboost
     import numpy as np
+    import xgboost
 
     print(f"   ✓ Core libraries imported ({time.time()-start:.2f}s)")
 except Exception as e:
@@ -45,8 +45,9 @@ else:
 print("\n[4/4] Testing prediction...")
 start = time.time()
 try:
-    from app.schemas.academic_risk import AcademicRiskRequest
     import asyncio
+
+    from app.schemas.academic_risk import AcademicRiskRequest
 
     async def test():
         req = AcademicRiskRequest(

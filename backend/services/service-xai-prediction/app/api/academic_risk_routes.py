@@ -2,10 +2,10 @@
 Academic Risk Prediction Routes
 """
 
-from fastapi import APIRouter, HTTPException, status
+from app.core.logging import get_logger
 from app.schemas.academic_risk import AcademicRiskRequest, AcademicRiskResponse
 from app.Services.academic_risk_service import academic_risk_service
-from app.core.logging import get_logger
+from fastapi import APIRouter, HTTPException, status
 
 logger = get_logger(__name__)
 router = APIRouter()

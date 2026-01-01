@@ -3,8 +3,9 @@
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock
-import pytest
+
 import numpy as np
+import pytest
 
 # Add project root to Python path
 project_root = Path(__file__).parent
