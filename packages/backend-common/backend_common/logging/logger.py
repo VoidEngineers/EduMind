@@ -1,7 +1,8 @@
 import logging
 import sys
-import structlog
 from typing import Any
+
+import structlog
 
 
 def configure_logging(log_level: str = "INFO", json_format: bool = True) -> None:

@@ -1,9 +1,9 @@
-from typing import Any
 from datetime import datetime
+from typing import Any
+
+from sqlalchemy import Column, DateTime, Integer, create_engine
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
-from sqlalchemy import Column, DateTime, Integer
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
 
 
 @as_declarative()

@@ -1,8 +1,9 @@
+from typing import Optional
+
+from app.core.logging import configure_logging, get_logger
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings
-from typing import Optional
-from app.core.logging import configure_logging, get_logger
 
 
 class Settings(BaseSettings):

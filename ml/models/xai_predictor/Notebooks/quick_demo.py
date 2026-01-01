@@ -1,15 +1,16 @@
 # Quick Demo: OULAD Academic Risk Prediction
 # Run this in your Jupyter notebook to see the complete system in action
 
-import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import seaborn as sns
+import shap
 import xgboost as xgb
+from sklearn.metrics import (classification_report, confusion_matrix,
+                             roc_auc_score)
 from sklearn.model_selection import train_test_split
 from sklearn.utils.class_weight import compute_class_weight
-from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
-import shap
 
 # Set display options
 pd.set_option("display.max_columns", None)

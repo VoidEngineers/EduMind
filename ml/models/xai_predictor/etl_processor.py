@@ -1,7 +1,8 @@
 # %% ETL for OULAD Dataset - Academic Risk Prediction
-import pandas as pd
-import numpy as np
 import os
+
+import numpy as np
+import pandas as pd
 
 print("=" * 60)
 print("OULAD DATASET - ACADEMIC PERFORMANCE ETL")
