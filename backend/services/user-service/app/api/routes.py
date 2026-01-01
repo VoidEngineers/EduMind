@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.api import deps
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
 from app.services.user_service import user_service
-from backend_common.auth.security import create_access_token
+from app.core.security import create_access_token
 from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter()

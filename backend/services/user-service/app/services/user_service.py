@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from typing import Optional, List
-from backend_common.auth.security import get_password_hash, verify_password
+from app.core.security import get_password_hash, verify_password
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 
