@@ -121,7 +121,7 @@ jobs:
                         owner: context.repo.owner,
                         repo: context.repo.repo,
                         commit_sha: context.sha,
-                        body: `🚀 **Jenkins Deployment Triggered**\n\n` +
+                        body: `**Jenkins Deployment Triggered**\n\n` +
                               `**Branch:** ${branch}\n` +
                               `**Services:**\n${servicesList}\n\n` +
                               `Monitor progress: ${{ secrets.JENKINS_URL }}/job/edumind-deploy/`
