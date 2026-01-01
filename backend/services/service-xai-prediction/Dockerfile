@@ -18,6 +18,9 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
 # Copy application code
 COPY app/ ./app/
 
+# Copy saved models
+COPY saved_models/ ./saved_models/
+
 # Create non-root user
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 RUN chown -R appuser:appuser /app

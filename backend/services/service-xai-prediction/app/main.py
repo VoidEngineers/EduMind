@@ -73,6 +73,10 @@ app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 # Include routers
 app.include_router(routes.router, prefix=settings.API_PREFIX, tags=["predictions"])
 
+# Include academic risk routes
+from app.api import academic_risk_routes
+app.include_router(academic_risk_routes.router, prefix=settings.API_PREFIX, tags=["academic-risk"])
+
 @app.get("/")
 async def root():
     return {

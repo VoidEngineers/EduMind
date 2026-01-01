@@ -1,21 +1,26 @@
-"""Schema exports"""
+"""Schemas for XAI Prediction Service"""
+from .health import HealthResponse, ModelInfoResponse
+
+# Academic risk schemas
+from .academic_risk import AcademicRiskRequest, AcademicRiskResponse
+
+# Prediction schemas
 from .prediction import (
     PredictionRequest,
     PredictionResponse,
     PredictionResult,
-    Explanation,
-    FeatureImportance,
-    RiskLevel
+    ExplanationResult,
+    FeatureContribution
 )
-from .health import HealthResponse, ModelInfoResponse
 
 __all__ = [
+    "HealthResponse",
+    "ModelInfoResponse",
+    "AcademicRiskRequest",
+    "AcademicRiskResponse",
     "PredictionRequest",
     "PredictionResponse",
     "PredictionResult",
-    "Explanation",
-    "FeatureImportance",
-    "RiskLevel",
-    "HealthResponse",
-    "ModelInfoResponse"
+    "ExplanationResult",
+    "FeatureContribution"
 ]

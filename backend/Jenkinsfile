@@ -1,5 +1,5 @@
 // EduMind Backend Services - Deployment Pipeline
-// Strategy 2: GitHub Actions validates PRs, Jenkins handles build & deploy
+// GitHub Actions validates PRs, Jenkins handles build & deploy
 
 pipeline {
     agent {

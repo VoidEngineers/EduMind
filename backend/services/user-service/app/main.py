@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend_common.logging.logger import configure_logging, get_logger
+from app.core.logging import configure_logging, get_logger
 from app.core.config import settings
 from app.api import routes
 

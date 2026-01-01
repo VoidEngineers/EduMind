@@ -1,78 +1,89 @@
-"""Prediction schemas for XAI service"""
+"""
+Prediction Schemas for XAI Prediction Service
+"""
 from pydantic import BaseModel, Field
-from typing import List, Dict
-from datetime import datetime
-from uuid import UUID, uuid4
-from enum import Enum
-
-
-class RiskLevel(str, Enum):
-    """Risk level enumeration"""
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    CRITICAL = "critical"
+from typing import List, Optional, Dict, Any
 
 
 class PredictionRequest(BaseModel):
     """Request schema for student outcome prediction"""
-    student_id: UUID
-    features: Dict[str, float]
+    student_id: str = Field(..., description="Unique student identifier")
+    
+    # Core academic features
+    total_interactions: float = Field(default=0.0, ge=0, description="Total learning interactions")
+    avg_response_time: float = Field(default=0.0, ge=0, description="Average response time in seconds")
+    consistency_score: float = Field(default=0.5, ge=0, le=1, description="Learning consistency (0-1)")
+    days_inactive: int = Field(default=0, ge=0, description="Days since last activity")
+    
+    # Optional features
+    completion_rate: float = Field(default=0.5, ge=0, le=1, description="Course completion rate")
+    assessment_score: float = Field(default=50.0, ge=0, le=100, description="Average assessment score")
     
     model_config = {
         "json_schema_extra": {
             "example": {
-                "student_id": "123e4567-e89b-12d3-a456-426614174000",
-                "features": {
-                    "code_module": 0,
-                    "code_presentation": 1,
-                    "gender": 0,
-                    "region": 5,
-                    "highest_education": 2,
-                    "imd_band": 50,
-                    "age_band": 2,
-                    "num_of_prev_attempts": 0,
-                    "studied_credits": 120,
-                    "disability": 0
-                }
+                "student_id": "student_12345",
+                "total_interactions": 150,
+                "avg_response_time": 45.5,
+                "consistency_score": 0.75,
+                "days_inactive": 3,
+                "completion_rate": 0.65,
+                "assessment_score": 72.5
             }
         }
     }
 
 
-class FeatureImportance(BaseModel):
-    """Feature importance details"""
-    feature_name: str
-    importance: float
-    shap_value: float
-    contribution: str
-
-
-class Explanation(BaseModel):
-    """Explanation schema for XAI predictions"""
-    id: UUID = Field(default_factory=uuid4)
-    prediction_result_id: UUID
-    shap_values: Dict[str, float]
-    top_features: List[FeatureImportance]
-    natural_language_explanation: str
-    confidence_factors: List[str]
-    risk_factors: List[str]
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-
-
 class PredictionResult(BaseModel):
-    """Prediction result schema"""
-    id: UUID = Field(default_factory=uuid4)
-    request_id: UUID
-    student_id: UUID
-    predicted_class: str
-    probability: float
-    probabilities: Dict[str, float]
-    risk_level: RiskLevel
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    """Individual prediction result"""
+    predicted_class: str = Field(..., description="Predicted outcome class")
+    probability: float = Field(..., ge=0, le=1, description="Prediction probability")
+    risk_level: str = Field(..., description="Risk level: low, medium, high")
+
+
+class FeatureContribution(BaseModel):
+    """Feature importance for explanation"""
+    feature: str
+    value: float
+    contribution: float
+    impact: str  # positive or negative
+
+
+class ExplanationResult(BaseModel):
+    """XAI Explanation result"""
+    feature_contributions: List[FeatureContribution]
+    top_positive_factors: List[str]
+    top_negative_factors: List[str]
+    shap_values: Optional[Dict[str, float]] = None
+    base_value: Optional[float] = None
 
 
 class PredictionResponse(BaseModel):
-    """Complete prediction response with explanation"""
+    """Response schema for prediction"""
     prediction: PredictionResult
-    explanation: Explanation
+    explanation: ExplanationResult
+    recommendations: List[str] = Field(default_factory=list)
+    
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "prediction": {
+                    "predicted_class": "at_risk",
+                    "probability": 0.75,
+                    "risk_level": "high"
+                },
+                "explanation": {
+                    "feature_contributions": [
+                        {"feature": "days_inactive", "value": 15, "contribution": 0.25, "impact": "negative"},
+                        {"feature": "total_interactions", "value": 50, "contribution": 0.15, "impact": "negative"}
+                    ],
+                    "top_positive_factors": ["consistency_score"],
+                    "top_negative_factors": ["days_inactive", "total_interactions"]
+                },
+                "recommendations": [
+                    "Increase engagement with course materials",
+                    "Complete pending assessments"
+                ]
+            }
+        }
+    }

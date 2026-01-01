@@ -35,13 +35,11 @@ services:
   # --- Microservices ---
   user-service:
     build:
-      context: .
-      dockerfile: backend/services/user-service/Dockerfile
+      context: backend/services/user-service
+      dockerfile: Dockerfile
     ports:
       - "8001:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres_password@postgres:5432/edumind
-      - REDIS_URL=redis://redis:6379
       - SERVICE_NAME=user-service
     depends_on:
       postgres:
@@ -53,13 +51,11 @@ services:
 
   course-service:
     build:
-      context: .
-      dockerfile: backend/services/course-service/Dockerfile
+      context: backend/services/course-service
+      dockerfile: Dockerfile
     ports:
       - "8002:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres_password@postgres:5432/edumind
-      - REDIS_URL=redis://redis:6379
       - SERVICE_NAME=course-service
     depends_on:
       postgres:
@@ -69,16 +65,14 @@ services:
     networks:
       - edumind-network
 
-  xai-service:
+  assessment-service:
     build:
-      context: .
-      dockerfile: backend/services/service-xai-prediction/Dockerfile
+      context: backend/services/assessment-service
+      dockerfile: Dockerfile
     ports:
       - "8003:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres_password@postgres:5432/edumind
-      - REDIS_URL=redis://redis:6379
-      - SERVICE_NAME=xai-prediction-service
+      - SERVICE_NAME=assessment-service
     depends_on:
       postgres:
         condition: service_healthy
@@ -87,6 +81,53 @@ services:
     networks:
       - edumind-network
 
+  service-engagement-tracker:
+    build:
+      context: backend/services/service-engagement-tracker
+      dockerfile: Dockerfile
+    ports:
+      - "8004:8000"
+    environment:
+      - SERVICE_NAME=service-engagement-tracker
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - edumind-network
+
+  service-learning-style:
+    build:
+      context: backend/services/service-learning-style
+      dockerfile: Dockerfile
+    ports:
+      - "8005:8000"
+    environment:
+      - SERVICE_NAME=service-learning-style
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - edumind-network
+
+  service-xai-prediction:
+    build:
+      context: backend/services/service-xai-prediction
+      dockerfile: Dockerfile
+    ports:
+      - "8006:8000"
+    environment:
+      - SERVICE_NAME=service-xai-prediction
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - edumind-network
 volumes:
   postgres_data:
 

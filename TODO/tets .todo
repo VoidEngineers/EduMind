@@ -1,0 +1,8 @@
+# Health checks
+curl http://localhost:8001/health  # user-service
+curl http://localhost:8006/health  # xai-prediction
+
+# XAI Prediction
+curl -X POST http://localhost:8006/api/v1/predict \
+  -H "Content-Type: application/json" \
+  -d '{"student_id": "test", "total_interactions": 100, ...}'

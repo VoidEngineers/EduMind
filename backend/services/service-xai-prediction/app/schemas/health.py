@@ -14,4 +14,4 @@ class ModelInfoResponse(BaseModel):
     features_count: int
     feature_names: List[str]
     classes: List[str]
-    metadata: Dict[str, Any]   
+    metadata: Dict[str, Any]

@@ -19,6 +19,9 @@ def setup_logging(log_level: str = "INFO"):
     logging.getLogger("uvicorn").setLevel(level)
     logging.getLogger("fastapi").setLevel(level)
 
+# Alias for backward compatibility
+configure_logging = setup_logging
+
 
 def get_logger(name: str) -> logging.Logger:
     """Get a logger instance"""

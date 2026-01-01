@@ -39,10 +39,14 @@ async def predict_student_outcome(request: PredictionRequest):
         # Make prediction
         prediction, explanation = await ml_service.predict(request)
         
+        # Generate recommendations
+        recommendations = ml_service._generate_recommendations(request, prediction.risk_level)
+        
         # Return response
         response = PredictionResponse(
             prediction=prediction,
-            explanation=explanation
+            explanation=explanation,
+            recommendations=recommendations
         )
         
         logger.info(

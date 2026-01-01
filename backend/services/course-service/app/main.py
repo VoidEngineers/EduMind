@@ -1,12 +1,22 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend_common.logging.logger import configure_logging, get_logger
-from backend_common.core.config import BaseServiceSettings
+from pydantic_settings import BaseSettings
+from typing import Optional
+from app.core.logging import configure_logging, get_logger
 
-class Settings(BaseServiceSettings):
+
+class Settings(BaseSettings):
     SERVICE_NAME: str = "course-service"
+    API_V1_STR: str = "/api/v1"
+    ENVIRONMENT: str = "development"
+    LOG_LEVEL: str = "INFO"
+    DATABASE_URL: Optional[str] = None
+    SECRET_KEY: str = "dev-secret-key"
+    
     class Config:
         env_file = ".env"
+        case_sensitive = True
+
 
 settings = Settings()
 configure_logging(log_level=settings.LOG_LEVEL)
