@@ -48,4 +48,4 @@ jobs:
 
       - name: PR status check
         if: github.event_name == 'pull_request'
-        run: echo "✅ PR validation complete."
+        run: echo "PR validation complete."
