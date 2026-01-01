@@ -27,10 +27,6 @@ models/checkpoints/*
 .dvc/tmp/
 .dvc/plots/
 
-# Jupyter Notebooks
-.ipynb_checkpoints/
-*.ipynb
-
 # Experiment tracking
 mlruns/
 runs/
