@@ -1,40 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './App.css'
+import { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom"
+import './AdminApp.css'
 
-function App() {
-  const navigate = useNavigate();
+function AdminApp() {
   const [stats, setStats] = useState({
     students: 0,
     courses: 0,
     resources: 0,
     completionRate: 0
   });
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleDropdownEnter = () => {
-    if (dropdownTimeoutRef.current) {
-      clearTimeout(dropdownTimeoutRef.current);
-    }
-    setProfileDropdownOpen(true);
-  };
-
-  const handleDropdownLeave = () => {
-    dropdownTimeoutRef.current = setTimeout(() => {
-      setProfileDropdownOpen(false);
-    }, 150);
-  };
-
-  const handleAdminLogin = () => {
-    navigate('/admin-signin');
-    setProfileDropdownOpen(false);
-  };
-
-  const handleUserLogin = () => {
-    navigate('/user-signin');
-    setProfileDropdownOpen(false);
-  };
+    const navigate = useNavigate()
 
   useEffect(() => {
     // Simulate loading stats
@@ -72,7 +48,7 @@ function App() {
                 </defs>
               </svg>
             </div>
-            <span>EduMind LMS</span>
+            <span>EduMind LMS - Admin</span>
           </div>
           <div className="nav-links">
             <button className="nav-link" onClick={() => scrollToSection('dashboard')}>Dashboard</button>
@@ -80,26 +56,12 @@ function App() {
             <button className="nav-link" onClick={() => scrollToSection('resources')}>Resources</button>
             <button className="nav-link" onClick={() => scrollToSection('analytics')}>Analytics</button>
             <button className="nav-button">Get Started</button>
-            <div className="nav-profile-wrapper"
-              onMouseEnter={handleDropdownEnter}
-              onMouseLeave={handleDropdownLeave}
-            >
-              <button 
-                className="nav-profile-icon" 
-                title="User Profile"
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-              </button>
-              {profileDropdownOpen && (
-                <div className="profile-dropdown">
-                  <button className="dropdown-item" onClick={handleAdminLogin}>Login as Admin</button>
-                  <button className="dropdown-item" onClick={handleUserLogin}>Login as User</button>
-                </div>
-              )}
-            </div>
+            <button className="nav-profile-icon" title="Admin Profile">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </button>
           </div>
         </div>
       </nav> */}
@@ -117,7 +79,7 @@ function App() {
             </h1>
             <p className="hero-subtitle">
               Your intelligent learning management system powered by AI. 
-              Discover personalized courses, track progress, and achieve your learning goals.
+              Manage courses, track student progress, and optimize your educational platform.
             </p>
             <div className="hero-actions">
               <button className="btn-primary-modern" onClick={() => scrollToSection('courses')}>
@@ -125,7 +87,7 @@ function App() {
                   <path d="M5 12h14"/>
                   <path d="m12 5 7 7-7 7"/>
                 </svg>
-                <span>Explore Courses</span>
+                <span>Manage Courses</span>
               </button>
               <button className="btn-secondary-modern" onClick={() => scrollToSection('dashboard')}>
                 <span>View Dashboard</span>
@@ -223,8 +185,8 @@ function App() {
         <div className="main-container">
           <div className="workflow-header">
             <div className="step-badge">Featured</div>
-            <h2>Explore Our Courses</h2>
-            <p>Hand-picked courses designed to accelerate your learning journey</p>
+            <h2>Manage Courses</h2>
+            <p>View and manage all courses in the platform</p>
           </div>
 
           <div className="courses-grid">
@@ -261,7 +223,7 @@ function App() {
                   <span>1,234 students</span>
                 </div>
               </div>
-              <button className="btn-course">Enroll Now</button>
+              <button className="btn-course">Edit Course</button>
             </div>
 
             <div className="course-card">
@@ -297,7 +259,7 @@ function App() {
                   <span>2,456 students</span>
                 </div>
               </div>
-              <button className="btn-course">Enroll Now</button>
+              <button className="btn-course">Edit Course</button>
             </div>
 
             <div className="course-card">
@@ -333,7 +295,7 @@ function App() {
                   <span>856 students</span>
                 </div>
               </div>
-              <button className="btn-course">Enroll Now</button>
+              <button className="btn-course">Edit Course</button>
             </div>
           </div>
         </div>
@@ -345,7 +307,7 @@ function App() {
           <div className="workflow-header">
             <div className="step-badge">Library</div>
             <h2>Learning Resources</h2>
-            <p>Access thousands of curated resources to support your learning</p>
+            <p>Manage and organize all learning resources</p>
           </div>
 
           <div className="resources-grid">
@@ -408,84 +370,25 @@ function App() {
           <div className="workflow-header">
             <div className="step-badge">Insights</div>
             <h2>Learning Analytics</h2>
-            <p>Track your progress and optimize your learning path</p>
+            <p>Track and analyze student progress and performance</p>
           </div>
 
           <div className="analytics-buttons">
-            <button className="analytics-btn">Learning Style Analytics</button>
-            <button className="analytics-btn">Engagement Analytics</button>
-            <button className="analytics-btn">Performance Analytics</button>
-          </div>
+            <button
+            className="analytics-btn"
+            onClick={() => navigate("/learning-style")}
+            >
+            Manage Learning Style Analytics
+            </button>
 
-          <div className="analytics-grid">
-            <div className="analytics-card">
-              <h3>Progress Overview</h3>
-              <div className="progress-visual">
-                <div className="progress-ring">
-                  <svg width="120" height="120" viewBox="0 0 120 120">
-                    <circle cx="60" cy="60" r="50" stroke="rgba(255,255,255,0.1)" strokeWidth="8" fill="none"/>
-                    <circle cx="60" cy="60" r="50" stroke="url(#progressGradient)" strokeWidth="8" 
-                            fill="none" strokeDasharray="314" strokeDashoffset="94" 
-                            transform="rotate(-90 60 60)" strokeLinecap="round"/>
-                    <defs>
-                      <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style={{stopColor:"#667eea"}}/>
-                        <stop offset="100%" style={{stopColor:"#764ba2"}}/>
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                  <div className="progress-text">
-                    <span className="progress-value">70%</span>
-                    <span className="progress-label">Complete</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <button
+            className="analytics-btn"
+            onClick={() => navigate("/engagement")}
+            >
+           Manage Engagement Analytics
+            </button>
 
-            <div className="analytics-card">
-              <h3>Recent Activity</h3>
-              <div className="activity-list">
-                <div className="activity-item">
-                  <div className="activity-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                      <polyline points="22 4 12 14.01 9 11.01"/>
-                    </svg>
-                  </div>
-                  <div className="activity-content">
-                    <p>Completed "Introduction to Python"</p>
-                    <span>2 hours ago</span>
-                  </div>
-                </div>
-                <div className="activity-item">
-                  <div className="activity-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                      <path d="M2 17l10 5 10-5"/>
-                      <path d="M2 12l10 5 10-5"/>
-                    </svg>
-                  </div>
-                  <div className="activity-content">
-                    <p>Started "Machine Learning Basics"</p>
-                    <span>5 hours ago</span>
-                  </div>
-                </div>
-                <div className="activity-item">
-                  <div className="activity-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                      <circle cx="9" cy="7" r="4"/>
-                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                    </svg>
-                  </div>
-                  <div className="activity-content">
-                    <p>Joined study group</p>
-                    <span>1 day ago</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <button className="analytics-btn">Manage Performance Analytics</button>
           </div>
         </div>
       </section>
@@ -493,4 +396,4 @@ function App() {
   );
 }
 
-export default App;
+export default AdminApp;
