@@ -1,10 +1,16 @@
 """
 Prediction Schemas for XAI Prediction Service
 """
-
-from typing import Any, Dict, List, Optional
+from enum import Enum
+from typing import  Dict, List, Optional
 
 from pydantic import BaseModel, Field
+
+
+class RiskLevel(str, Enum):
+        LOW = "low"
+        MEDIUM = "medium"
+        HIGH = "high"
 
 
 class PredictionRequest(BaseModel):
@@ -72,8 +78,7 @@ class ExplanationResult(BaseModel):
     top_negative_factors: List[str]
     shap_values: Optional[Dict[str, float]] = None
     base_value: Optional[float] = None
-
-
+    
 class PredictionResponse(BaseModel):
     """Response schema for prediction"""
 
