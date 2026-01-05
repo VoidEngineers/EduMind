@@ -1,8 +1,63 @@
+## System Architecture
+
+```mermaid
+graph TD
+  WEB[Web App (React/TS)]
+  AS[Assessment Service]
+  CS[Course Service]
+  US[User Service]
+  ET[Engagement Tracker]
+  LS[Learning Style Service]
+  XAI[XAI Prediction Service]
+  SH[Shared Python/TS Libraries]
+  ML_PIPE[ML Pipelines (Airflow)]
+  MODELS[ML Models]
+  DB[(Database(s))]
+  STORAGE[(Cloud Storage)]
+  K8S[Kubernetes Cluster)]
+  CI[CI/CD (Jenkins)]
+
+  WEB -->|REST/gRPC| AS
+  WEB -->|REST/gRPC| CS
+  WEB -->|REST/gRPC| US
+  WEB -->|REST/gRPC| ET
+  WEB -->|REST/gRPC| LS
+  WEB -->|REST/gRPC| XAI
+
+  AS --> SH
+  CS --> SH
+  US --> SH
+  ET --> SH
+  LS --> SH
+  XAI --> SH
+
+  AS --> DB
+  CS --> DB
+  US --> DB
+  ET --> DB
+  LS --> DB
+  XAI --> DB
+
+  ML_PIPE --> MODELS
+  MODELS --> XAI
+  ML_PIPE --> STORAGE
+  MODELS --> STORAGE
+
+  K8S --> AS
+  K8S --> CS
+  K8S --> US
+  K8S --> ET
+  K8S --> LS
+  K8S --> XAI
+  K8S --> WEB
+
+  CI --> K8S
+```
 # EduMind
 
 AI-powered educational platform with explainable predictions for student academic risk.
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 /EduMind
@@ -30,7 +85,7 @@ AI-powered educational platform with explainable predictions for student academi
 └── /data                     # Datasets
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -96,7 +151,7 @@ cd apps/web
 pnpm test
 ```
 
-## 📦 Services
+## Services
 
 | Service | Port | Description |
 |---------|------|-------------|
@@ -107,7 +162,7 @@ pnpm test
 | `service-engagement-tracker` | 8005 | Student engagement tracking |
 | `service-learning-style` | 8006 | Learning style recognition |
 
-## 🤖 ML Models
+## ML Models
 
 - **Academic Risk Predictor**: XGBoost model trained on OULAD dataset
   - Predicts student pass/fail probability
@@ -118,6 +173,6 @@ pnpm test
 
 - 4 members (VoidEngineers)
 
-## 📄 License
+## License
 
 MIT
