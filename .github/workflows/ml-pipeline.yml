@@ -96,7 +96,7 @@ jobs:
 
                   echo "Model training complete!"
                   echo "Model artifacts:"
-                  ls -lh *.joblib 2>/dev/null || echo "No .joblib files found"
+                  ls -lh saved_models/ 2>/dev/null || echo "No saved_models directory found"
 
             - name: Validate model artifacts
               working-directory: ml/models/xai_predictor
@@ -104,12 +104,9 @@ jobs:
                   echo "Checking for required model files..."
 
                   required_files=(
-                    "student_model_best.joblib"
-                    "scaler_best.joblib"
-                    "label_encoder_best.joblib"
-                    "feature_selector_best.joblib"
-                    "model_features_best.joblib"
-                    "model_metadata_best.joblib"
+                    "saved_models/academic_risk_model.json"
+                    "saved_models/academic_risk_model.pkl"
+                    "saved_models/model_metadata.json"
                   )
 
                   missing_files=()
@@ -126,27 +123,31 @@ jobs:
                   fi
 
                   echo "All model artifacts present!"
+                  
+                  # Display model accuracy from metadata
+                  echo "Model Metadata:"
+                  cat saved_models/model_metadata.json | head -30
 
             - name: Upload model artifacts
               uses: actions/upload-artifact@v4
               with:
                   name: xai-predictor-models
                   path: |
-                      ml/models/xai_predictor/*.joblib
+                      ml/models/xai_predictor/saved_models/
                   retention-days: 30
 
             - name: Calculate model sizes
               id: sizes
               working-directory: ml/models/xai_predictor
               run: |
-                  xgb_size=$(du -h student_model_best.joblib | cut -f1)
-                  total_size=$(du -ch *.joblib | grep total | cut -f1)
+                  model_size=$(du -h saved_models/academic_risk_model.json | cut -f1)
+                  total_size=$(du -ch saved_models/* | grep total | cut -f1)
 
-                  echo "xgb_size=$xgb_size" >> $GITHUB_OUTPUT
+                  echo "model_size=$model_size" >> $GITHUB_OUTPUT
                   echo "total_size=$total_size" >> $GITHUB_OUTPUT
 
                   echo "Model sizes:"
-                  echo "├─ XGBoost model: $xgb_size"
+                  echo "├─ XGBoost model: $model_size"
                   echo "└─ Total deployment: $total_size"
 
     train-engagement-predictor:
@@ -239,7 +240,10 @@ jobs:
 
                   mkdir -p backend/services/service-xai-prediction/app/model
 
-                  cp ml/models/xai_predictor/*.joblib \
+                  cp ml/models/xai_predictor/saved_models/*.json \
+                     backend/services/service-xai-prediction/app/model/
+                  
+                  cp ml/models/xai_predictor/saved_models/*.pkl \
                      backend/services/service-xai-prediction/app/model/
 
                   echo "Models copied successfully!"
@@ -250,7 +254,8 @@ jobs:
                   git config --global user.name "github-actions[bot]"
                   git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-                  git add backend/services/service-xai-prediction/app/model/*.joblib
+                  git add backend/services/service-xai-prediction/app/model/*.json
+                  git add backend/services/service-xai-prediction/app/model/*.pkl
 
                   if git diff --staged --quiet; then
                     echo "No model changes to commit"
