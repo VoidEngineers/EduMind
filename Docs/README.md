@@ -24,6 +24,10 @@ EduMind/
 └── turbo.json                # Turborepo configuration
 ```
 
+## System Architecture
+
+![EduMind Architecture](Architecture-Diagram-Simply.png)
+
 ## Tech Stack
 
 ### Frontend
