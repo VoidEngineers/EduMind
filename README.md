@@ -24,6 +24,20 @@
 - **Interactive Dashboards**: Rich data visualization for actionable insights.
 - **Cloud-Native Architecture**: Scalable microservices on GCP/GKE.
 
+- **Cloud-Native Architecture**: Scalable microservices on GCP/GKE.
+
+---
+
+## System Overview
+
+EduMind operates as a layered cloud-native platform designed for scalability, observability, and real-time intelligence:
+
+1.  **Frontend Layer**: A responsive React/Vite application that provides interactive dashboards for students and educators.
+2.  **API Gateway**: Nginx acts as the entry point, routing secure traffic to appropriate microservices.
+3.  **Microservices Layer**: Independent Python/FastAPI services handle specific domains (Users, Courses, XAI Predictions).
+4.  **Intelligence Layer**: Asynchronous ML pipelines (Airflow) train and update risk models using historical data.
+5.  **Data Layer**: A hybrid storage strategy using PostgreSQL for transactional data and TimescaleDB for high-volume engagement metrics.
+
 ---
 
 ## System Architecture
