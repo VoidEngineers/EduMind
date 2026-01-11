@@ -47,3 +47,39 @@ export type RiskGaugeProps = {
 export type ProbabilitiesSectionProps = {
     probabilities: Record<string, number>;
 };
+
+export type RiskFactor = {
+    name: string;
+    impact: number; // 0-100
+    category: 'academic' | 'engagement' | 'behavioral';
+};
+
+export type RiskFactorsChartProps = {
+    factors: RiskFactor[];
+    theme: 'dark' | 'light';
+};
+export type StudentMetrics = {
+    academicPerformance: number; // 0-100
+    attendance: number;
+    engagement: number;
+    assignmentCompletion: number;
+    participationScore: number;
+};
+
+export type StudentMetricsChartProps = {
+    metrics: StudentMetrics;
+    classAverage?: StudentMetrics;
+    theme: 'light' | 'dark';
+};
+
+export type TrendData = {
+    metric: string;
+    current: number;
+    previous: number;
+    trend: 'up' | 'down' | 'stable';
+};
+
+export type TrendIndicatorsProps = {
+    trends: TrendData[];
+};
+
