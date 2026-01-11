@@ -11,11 +11,11 @@
 
 ---
 
-## 📖 Overview
+## Overview
 
 **EduMind** is a cloud-native learning analytics platform designed to bridge the gap between "Black Box" AI and actionable educational support. Unlike traditional LMS dashboards that only show past grades, EduMind uses real-time behavioral analysis and Explainable AI (XAI) to predict student outcomes before failure occurs, providing transparent, personalized interventions.
 
-### 🚀 Key Features
+### Key Features
 
 - **Predictive Analytics**: ML assessment of student risk levels.
 - **Explainable AI (XAI)**: Transparent reasoning behind every prediction.
@@ -26,7 +26,7 @@
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ![EduMind GCP Cloud Native Architecture](Docs/edumind_gcp_architecture.png)
 
@@ -44,7 +44,7 @@
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```bash
 /EduMind
@@ -68,7 +68,7 @@
 
 ---
 
-## ⚡ Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -127,7 +127,7 @@ pnpm nx graph                                  # Visualize project graph
 
 ---
 
-## 🧩 Microservices
+## Microservices
 
 | Service            | Port | Description            | Documentation |
 | ------------------ | ---- | ---------------------- | ------------- |
@@ -140,7 +140,7 @@ pnpm nx graph                                  # Visualize project graph
 
 ---
 
-## 🧪 Testing
+## Testing
 
 Run tests across the entire monorepo:
 
@@ -155,7 +155,7 @@ pnpm nx test service-xai-prediction
 
 ---
 
-## 🛠️ Observability
+## Observability
 
 Local monitoring stack available at `http://localhost:3000` (Grafana):
 
@@ -165,12 +165,12 @@ Local monitoring stack available at `http://localhost:3000` (Grafana):
 
 ---
 
-## 👥 Team
+## Team
 
 **VoidEngineers**
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the **MIT License**.
