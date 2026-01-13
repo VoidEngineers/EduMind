@@ -1,7 +1,8 @@
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
 import type { ErrorInfo } from 'react';
 import { Component } from 'react';
-import './XAIErrorBoundary.css';
 import type { Props, State } from './types';
 
 /**
@@ -55,51 +56,58 @@ export class XAIErrorBoundary extends Component<Props, State> {
             }
 
             return (
-                <div className="xai-error-boundary" role="alert" aria-live="assertive">
-                    <div className="error-content">
-                        <div className="error-icon">
-                            <AlertTriangle size={64} />
-                        </div>
+                <div className="min-h-screen bg-background flex items-center justify-center p-8" role="alert" aria-live="assertive">
+                    <Card className="max-w-2xl w-full shadow-xl border-destructive/50">
+                        <CardContent className="pt-12 pb-8 text-center space-y-6">
+                            <div className="flex justify-center">
+                                <div className="p-4 bg-destructive/10 rounded-full">
+                                    <AlertTriangle size={64} className="text-destructive" />
+                                </div>
+                            </div>
 
-                        <h1>Something went wrong</h1>
+                            <div className="space-y-2">
+                                <h1 className="text-3xl font-bold">Something went wrong</h1>
+                                <p className="text-muted-foreground text-lg">
+                                    The prediction system encountered an unexpected error.
+                                    This has been logged and we'll look into it.
+                                </p>
+                            </div>
 
-                        <p className="error-message">
-                            The prediction system encountered an unexpected error.
-                            This has been logged and we'll look into it.
-                        </p>
+                            {this.state.error && (
+                                <details className="text-left bg-muted/50 rounded-lg p-4">
+                                    <summary className="cursor-pointer font-semibold mb-2">Technical Details</summary>
+                                    <pre className="text-sm overflow-auto bg-background p-4 rounded border mt-2">
+                                        <code className="text-destructive">{this.state.error.toString()}</code>
+                                        {this.state.errorInfo && (
+                                            <code className="block mt-2 text-muted-foreground">{this.state.errorInfo.componentStack}</code>
+                                        )}
+                                    </pre>
+                                </details>
+                            )}
 
-                        {this.state.error && (
-                            <details className="error-details">
-                                <summary>Technical Details</summary>
-                                <pre className="error-stack">
-                                    <code>{this.state.error.toString()}</code>
-                                    {this.state.errorInfo && (
-                                        <code>{this.state.errorInfo.componentStack}</code>
-                                    )}
-                                </pre>
-                            </details>
-                        )}
+                            <div className="flex gap-4 justify-center pt-4">
+                                <Button
+                                    variant="default"
+                                    onClick={this.handleReset}
+                                    aria-label="Try again"
+                                    className="flex items-center gap-2"
+                                >
+                                    <RefreshCw size={20} />
+                                    Try Again
+                                </Button>
 
-                        <div className="error-actions">
-                            <button
-                                className="btn-primary"
-                                onClick={this.handleReset}
-                                aria-label="Try again"
-                            >
-                                <RefreshCw size={20} />
-                                Try Again
-                            </button>
-
-                            <button
-                                className="btn-secondary"
-                                onClick={this.handleGoHome}
-                                aria-label="Go to homepage"
-                            >
-                                <Home size={20} />
-                                Go Home
-                            </button>
-                        </div>
-                    </div>
+                                <Button
+                                    variant="outline"
+                                    onClick={this.handleGoHome}
+                                    aria-label="Go to homepage"
+                                    className="flex items-center gap-2"
+                                >
+                                    <Home size={20} />
+                                    Go Home
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             );
         }

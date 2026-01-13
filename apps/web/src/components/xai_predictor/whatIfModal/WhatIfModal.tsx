@@ -1,14 +1,16 @@
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Sliders } from 'lucide-react';
 import { useState } from 'react';
-import { WhatIfModalHeader } from './WhatIfModalHeader';
-import { ScenarioIntro } from './ScenarioIntro';
-import { ChangedMetricsSummary } from './ChangedMetricsSummary';
-import { RiskComparison } from './RiskComparison';
-import { ScenarioHint } from './ScenarioHint';
-import { ScenarioControls } from './ScenarioControls';
-import { ModalActions } from './ModalActions';
-import { getRiskChange, getChangedMetrics } from './whatIfUtils';
 import type { RiskPredictionResponse, StudentRiskRequest } from '../services/xaiService';
+import { ChangedMetricsSummary } from './ChangedMetricsSummary';
+import { ModalActions } from './ModalActions';
+import { RiskComparison } from './RiskComparison';
+import { ScenarioControls } from './ScenarioControls';
+import { ScenarioHint } from './ScenarioHint';
+import { ScenarioIntro } from './ScenarioIntro';
 import type { WhatIfModalProps } from './types';
+import { getChangedMetrics, getRiskChange } from './whatIfUtils';
+
 export function WhatIfModal({
     show,
     onClose,
@@ -19,11 +21,15 @@ export function WhatIfModal({
     const [scenarioData, setScenarioData] = useState<StudentRiskRequest>(formData);
     const [simulatedPrediction, setSimulatedPrediction] = useState<RiskPredictionResponse | null>(null);
     const [isSimulating, setIsSimulating] = useState(false);
-    if (!show) return null;
+
+    // Update state when formData changes (reset on open usually handled by parent or effect, but here we init state)
+    // Note: In a real app, you might want a useEffect to sync scenarioData with formData when modal opens
+
     const handleSliderChange = (field: keyof StudentRiskRequest, value: number) => {
         setScenarioData(prev => ({ ...prev, [field]: value }));
         setSimulatedPrediction(null);
     };
+
     const handleSimulate = async () => {
         setIsSimulating(true);
         try {
@@ -35,30 +41,49 @@ export function WhatIfModal({
             setIsSimulating(false);
         }
     };
+
     const handleReset = () => {
         setScenarioData(formData);
         setSimulatedPrediction(null);
     };
+
     const riskChange = getRiskChange(currentPrediction, simulatedPrediction);
     const changedMetrics = getChangedMetrics(formData, scenarioData);
     const hasChanges = changedMetrics.length > 0;
+
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-container what-if-modal" onClick={(e) => e.stopPropagation()}>
-                <WhatIfModalHeader onClose={onClose} />
-                <div className="modal-body what-if-content">
-                    <ScenarioIntro />
-                    <ChangedMetricsSummary changedMetrics={changedMetrics} />
-                    <RiskComparison
-                        currentPrediction={currentPrediction}
-                        simulatedPrediction={simulatedPrediction}
-                        riskChange={riskChange}
-                    />
-                    {!hasChanges && <ScenarioHint />}
-                    <ScenarioControls
-                        scenarioData={scenarioData}
-                        onSliderChange={handleSliderChange}
-                    />
+        <Dialog open={show} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader className="pb-4 border-b">
+                    <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
+                        <Sliders className="h-6 w-6" />
+                        What-If Scenario Simulator
+                    </DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-8 py-4 px-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Left Column: Visualizations & Results */}
+                        <div className="space-y-6">
+                            <ScenarioIntro />
+                            <ChangedMetricsSummary changedMetrics={changedMetrics} />
+                            <RiskComparison
+                                currentPrediction={currentPrediction}
+                                simulatedPrediction={simulatedPrediction}
+                                riskChange={riskChange}
+                            />
+                            {!hasChanges && <ScenarioHint />}
+                        </div>
+
+                        {/* Right Column: Controls */}
+                        <div className="space-y-6">
+                            <ScenarioControls
+                                scenarioData={scenarioData}
+                                onSliderChange={handleSliderChange}
+                            />
+                        </div>
+                    </div>
+
                     <ModalActions
                         onReset={handleReset}
                         onSimulate={handleSimulate}
@@ -66,7 +91,7 @@ export function WhatIfModal({
                         hasChanges={hasChanges}
                     />
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }
