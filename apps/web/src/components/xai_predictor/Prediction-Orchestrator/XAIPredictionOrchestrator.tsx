@@ -4,14 +4,14 @@
  * Separated from main component for better testability and maintainability
  */
 
-import { useXAI } from '../contexts/XAIContext';
-import { useFormHandlers } from '../hooks/useFormHandlers';
-import { useResultsActions } from '../hooks/useResultsActions';
-import { ModelDownFallback } from '../modalDownFallback/ModelDownFallback';
-import { FormState, LoadingState, ResultsState } from '../prediction-state';
-import type { StudentRiskRequest } from '../services/xaiService';
-import { ErrorDisplay, XAILayout } from '../xai-Layout/XAILayout';
-import { XAIModals } from '../xai-modals/XAIModals';
+import { useXAI } from '../core/context/XAIContext';
+import { useFormHandlers } from '../core/hooks/useFormHandlers';
+import { useResultsActions } from '../core/hooks/useResultsActions';
+import type { StudentRiskRequest } from '../core/services/xaiService';
+import { FormState, LoadingState, ResultsState } from '../core/state';
+import { ModelDownFallback } from '../ui/fallbacks/ModelDownFallback';
+import { ErrorDisplay, XAILayout } from '../ui/layout/XAILayout';
+import { XAIModals } from '../ui/modals-container/XAIModals';
 
 /**
  * Orchestrator component that manages all XAI Prediction logic
