@@ -1,22 +1,19 @@
-import { BookOpen, Clock, Target } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { BookOpen, Clock } from 'lucide-react';
 import type { EngagementSectionProps } from './types';
 
 export function EngagementSection({ formData, onInputChange }: EngagementSectionProps) {
     return (
-        <>
-            <div className="section-title">
-                <Target size={20} />
-                <span>Engagement Metrics</span>
-            </div>
-
-            <div className="form-grid">
-                <div className="form-group">
-                    <label htmlFor="assessment_completion_rate">
-                        <Clock size={16} />
+        <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="space-y-2">
+                    <Label htmlFor="assessment_completion_rate" className="flex items-center gap-2 font-semibold">
+                        <Clock size={16} className="text-blue-600" />
                         Completion Rate
-                    </label>
-                    <div className="input-wrapper">
-                        <input
+                    </Label>
+                    <div className="relative">
+                        <Input
                             id="assessment_completion_rate"
                             type="number"
                             name="assessment_completion_rate"
@@ -28,22 +25,23 @@ export function EngagementSection({ formData, onInputChange }: EngagementSection
                             required
                             placeholder="0.0 - 1.0"
                             aria-describedby="completion_rate_hint"
+                            className="bg-background border-input focus:border-primary focus:ring-1 focus:ring-primary pr-16"
                         />
-                        <span className="input-suffix">
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-600 font-semibold pointer-events-none">
                             {(formData.assessment_completion_rate * 100).toFixed(0)}%
                         </span>
                     </div>
-                    <span id="completion_rate_hint" className="input-hint">
+                    <span id="completion_rate_hint" className="block text-sm text-muted-foreground italic">
                         Decimal value (0 = 0%, 1 = 100%)
                     </span>
                 </div>
 
-                <div className="form-group">
-                    <label htmlFor="studied_credits">
-                        <BookOpen size={16} />
+                <div className="space-y-2">
+                    <Label htmlFor="studied_credits" className="flex items-center gap-2 font-semibold">
+                        <BookOpen size={16} className="text-blue-600" />
                         Studied Credits
-                    </label>
-                    <input
+                    </Label>
+                    <Input
                         id="studied_credits"
                         type="number"
                         name="studied_credits"
@@ -53,12 +51,13 @@ export function EngagementSection({ formData, onInputChange }: EngagementSection
                         required
                         placeholder="Total credits"
                         aria-describedby="studied_credits_hint"
+                        className="bg-background border-input focus:border-primary focus:ring-1 focus:ring-primary"
                     />
-                    <span id="studied_credits_hint" className="input-hint">
+                    <span id="studied_credits_hint" className="block text-sm text-muted-foreground italic">
                         Course credits enrolled
                     </span>
                 </div>
             </div>
-        </>
+        </div>
     );
 }

@@ -1,4 +1,5 @@
-import { X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CustomizeModalForm } from './CustomizeModalForm';
 import type { CustomizeModalProps } from './types';
 
@@ -12,27 +13,15 @@ export function CustomizeModal({
     onCategoryChange,
     onAdd
 }: CustomizeModalProps) {
-    if (!show) return null;
-
     return (
-        <div
-            className="modal-overlay"
-            onClick={onClose}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="customize-modal-title"
-        >
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-header">
-                    <h3 id="customize-modal-title">Add Custom Action</h3>
-                    <button
-                        className="modal-close"
-                        onClick={onClose}
-                        aria-label="Close customize modal"
-                    >
-                        <X size={24} />
-                    </button>
-                </div>
+        <Dialog open={show} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader className="border-b pb-4 mb-4">
+                    <DialogTitle className="text-2xl font-bold text-foreground">
+                        Add Custom Action
+                    </DialogTitle>
+                </DialogHeader>
+
                 <CustomizeModalForm
                     newActionItem={newActionItem}
                     onTitleChange={onTitleChange}
@@ -40,15 +29,19 @@ export function CustomizeModal({
                     onPriorityChange={onPriorityChange}
                     onCategoryChange={onCategoryChange}
                 />
-                <div className="modal-footer">
-                    <button className="btn-secondary" onClick={onClose}>
+
+                <DialogFooter className="gap-3 sm:gap-0 mt-6 pt-4 border-t">
+                    <Button variant="outline" onClick={onClose} className="bg-background text-foreground border-input hover:bg-muted">
                         Cancel
-                    </button>
-                    <button className="btn-primary" onClick={onAdd}>
+                    </Button>
+                    <Button
+                        onClick={onAdd}
+                        className="bg-blue-600 text-white hover:bg-blue-700 hover:text-white"
+                    >
                         Add Action
-                    </button>
-                </div>
-            </div>
-        </div>
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
