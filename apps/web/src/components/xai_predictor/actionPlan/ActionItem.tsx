@@ -3,8 +3,11 @@
  * Individual action card in the timeline
  */
 
-import { AlertCircle, CheckCircle, Circle, X } from 'lucide-react';
-import { getCategoryIcon, getPriorityColor} from './actionPlanUtils';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { CheckCircle, Circle } from 'lucide-react';
+import { getCategoryIcon, getPriorityColor } from './actionPlanUtils';
 import type { ActionItemProps } from './types';
 
 export function ActionItem({
@@ -28,79 +31,73 @@ export function ActionItem({
     };
 
     return (
-        <div className="action-item-wrapper" role="listitem">
-            <div className="action-item-timeline">
+        <Card
+            className="transition-all hover:shadow-md border border-border group overflow-hidden"
+            style={{ borderLeftWidth: '4px', borderLeftColor: priorityColor }}
+            role="listitem"
+        >
+            <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4 sm:items-start">
+                {/* Icon Column */}
                 <div
-                    className="timeline-dot"
-                    style={{ background: priorityColor }}
-                    aria-hidden="true"
+                    className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1"
+                    style={{ background: `${priorityColor}15`, color: priorityColor }}
                 >
-                    <span className="step-number">{index + 1}</span>
+                    <Icon size={20} />
                 </div>
-                {!isLast && <div className="timeline-line"></div>}
-            </div>
 
-            <div className="action-item-card">
-                <div className="action-card-header">
-                    <div className="action-category">
-                        <div
-                            className="category-icon"
-                            style={{ background: `${priorityColor}20`, color: priorityColor }}
-                            aria-hidden="true"
-                        >
-                            <Icon size={20} />
+                {/* Content Column */}
+                <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                {action.category.replace('-', ' ')}
+                            </span>
+                            <Badge
+                                variant="outline"
+                                className="text-xs font-bold"
+                                style={{
+                                    color: priorityColor,
+                                    borderColor: `${priorityColor}40`,
+                                    background: `${priorityColor}10`
+                                }}
+                            >
+                                {action.priority.toUpperCase()}
+                            </Badge>
                         </div>
-                        <span className="category-label">{action.category.replace('-', ' ')}</span>
                     </div>
-                    <div
-                        className="priority-badge"
-                        style={{
-                            background: `${priorityColor}15`,
-                            borderColor: `${priorityColor}50`,
-                            color: priorityColor
-                        }}
-                    >
-                        {action.priority === 'critical' && <AlertCircle size={14} />}
-                        {action.priority.toUpperCase()}
-                    </div>
-                </div>
 
-                <div className="action-card-body">
-                    <h4 className="action-title">{action.title}</h4>
-                    <p className="action-description">{action.description}</p>
-                </div>
+                    <h4 className={`text-lg font-bold mb-1 ${action.isCompleted ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+                        {action.title}
+                    </h4>
+                    <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+                        {action.description}
+                    </p>
 
-                <div className="action-card-footer">
-                    <button
-                        className={`action-btn-complete ${action.isCompleted ? 'completed' : ''}`}
-                        onClick={handleToggleComplete}
-                        aria-pressed={action.isCompleted}
-                        aria-label={action.isCompleted ? `Mark ${action.title} as incomplete` : `Mark ${action.title} as complete`}
-                    >
-                        {action.isCompleted ? (
-                            <>
-                                <CheckCircle size={16} />
-                                Completed
-                            </>
-                        ) : (
-                            <>
-                                <Circle size={16} />
-                                Mark Complete
-                            </>
-                        )}
-                    </button>
-
-                    {action.isCustom && (
-                        <button
-                            className="action-btn-delete"
-                            onClick={() => onRemoveAction(action.id)}
-                            aria-label={`Remove ${action.title} from action plan`}
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant={action.isCompleted ? "secondary" : "default"} // Solid default button for clear action
+                            size="sm"
+                            onClick={handleToggleComplete}
+                            aria-pressed={action.isCompleted}
+                            className="gap-2"
                         >
-                            <X size={16} />
-                        </button>
-                    )}
+                            {action.isCompleted ? <CheckCircle size={16} /> : <Circle size={16} />}
+                            {action.isCompleted ? 'Completed' : 'Mark Complete'}
+                        </Button>
+
+                        {action.isCustom && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onRemoveAction(action.id)}
+                                className="text-destructive hover:bg-destructive/10"
+                            >
+                                Remove
+                            </Button>
+                        )}
+                    </div>
                 </div>
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     );
 }
