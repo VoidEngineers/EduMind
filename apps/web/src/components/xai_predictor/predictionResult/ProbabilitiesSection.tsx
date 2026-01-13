@@ -1,40 +1,28 @@
+import { Progress } from '@/components/ui/progress';
 import type { ProbabilitiesSectionProps } from './types';
 
 export function ProbabilitiesSection({ probabilities }: ProbabilitiesSectionProps) {
     const getBarColor = (key: string): string => {
         const keyLower = key.toLowerCase();
-        if (keyLower.includes('safe')) return '#22c55e';
-        if (keyLower.includes('medium')) return '#f59e0b';
-        return '#ef4444';
+        if (keyLower.includes('safe')) return '!bg-green-600';
+        if (keyLower.includes('medium')) return '!bg-orange-600';
+        return '!bg-red-600';
     };
 
     return (
-        <div className="probabilities">
-            <h3>Prediction Probabilities</h3>
+        <div className="py-2 space-y-5">
             {Object.entries(probabilities).map(([key, value]) => (
-                <div key={key} className="probability-item">
-                    <div className="probability-label">
-                        <span>{key}</span>
-                        <span>{(value * 100).toFixed(1)}%</span>
+                <div key={key} className="space-y-2">
+                    <div className="flex justify-between items-center text-sm">
+                        <span className="font-medium text-muted-foreground capitalize">{key.replace(/_/g, ' ')}</span>
+                        <span className="font-bold text-foreground">{(value * 100).toFixed(1)}%</span>
                     </div>
-                    <div
-                        className="probability-bar-container"
-                        role="progressbar"
-                        aria-valuenow={value * 100}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-label={`${key} probability: ${(value * 100).toFixed(1)} percent`}
-                    >
-                        <div
-                            className="probability-bar-modern"
-                            style={{
-                                width: `${value * 100}%`,
-                                background: getBarColor(key),
-                            }}
-                        >
-                            <span className="probability-value">{(value * 100).toFixed(1)}%</span>
-                        </div>
-                    </div>
+                    <Progress
+                        value={value * 100}
+                        className="h-2.5 bg-muted/50"
+                        indicatorClassName={getBarColor(key).replace('bg-', 'bg-')} // Ensure we pass a color class
+                        aria-label={`${key} probability`}
+                    />
                 </div>
             ))}
         </div>
