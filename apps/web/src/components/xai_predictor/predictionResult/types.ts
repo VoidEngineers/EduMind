@@ -56,7 +56,6 @@ export type RiskFactor = {
 
 export type RiskFactorsChartProps = {
     factors: RiskFactor[];
-    theme: 'dark' | 'light';
 };
 export type StudentMetrics = {
     academicPerformance: number; // 0-100

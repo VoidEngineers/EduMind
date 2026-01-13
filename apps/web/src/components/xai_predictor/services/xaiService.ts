@@ -57,6 +57,8 @@ class XAIService {
             // Validate request data with Zod
             const validatedRequest = StudentRiskRequestSchema.parse(studentData);
 
+            console.log('XAIService - Sending request to API:', validatedRequest);
+
             const response = await fetch(`${this.baseURL}/api/v1/academic-risk/predict`, {
                 method: 'POST',
                 headers: {
@@ -75,10 +77,20 @@ class XAIService {
 
             const data = await response.json();
 
+            // Debug logging - see raw API response
+            console.log('XAIService - Raw API response:', data);
+            console.log('XAIService - Raw risk_score from API:', data.risk_score);
+            console.log('XAIService - risk_score type:', typeof data.risk_score);
+
             // Validate response with Zod
             const validatedData = RiskPredictionResponseSchema.parse(data);
+
+            console.log('XAIService - Validated data:', validatedData);
+            console.log('XAIService - Validated risk_score:', validatedData.risk_score);
+
             return validatedData;
         } catch (error) {
+            console.error('XAIService - Error in predictRisk:', error);
             if (error instanceof XAIError) {
                 throw error;
             }

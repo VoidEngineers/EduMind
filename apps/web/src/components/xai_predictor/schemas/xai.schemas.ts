@@ -18,18 +18,29 @@ export const StudentRiskRequestSchema = z.object({
     has_previous_attempts: z.number().int().min(0).max(1),
 });
 
+
 /**
  * Zod Schema for Risk Factor
+ * Using preprocess to handle cases where API returns invalid values
  */
 export const RiskFactorSchema = z.object({
     feature: z.string(),
-    value: z.number(),
+    value: z.preprocess(
+        (val) => {
+            // Handle null, undefined, or non-numeric strings
+            if (val === null || val === undefined || val === '') return 0;
+            const num = Number(val);
+            // If conversion results in NaN, default to 0
+            return isNaN(num) ? 0 : num;
+        },
+        z.number()
+    ),
     impact: z.string(),
 });
 
 /**
  * Zod Schema for Risk Prediction Response
- * Validates API response data
+ * Validates API response data and filters out invalid risk factors
  */
 export const RiskPredictionResponseSchema = z.object({
     student_id: z.string(),
@@ -42,7 +53,10 @@ export const RiskPredictionResponseSchema = z.object({
         'At-Risk': z.number(),
     }),
     recommendations: z.array(z.string()),
-    top_risk_factors: z.array(RiskFactorSchema),
+    top_risk_factors: z.array(RiskFactorSchema).transform((factors) =>
+        // Filter out any factors with value of 0 (which were NaN)
+        factors.filter(f => f.value !== 0 || f.feature !== '')
+    ),
     prediction_id: z.string(),
     timestamp: z.string(),
 });
