@@ -14,7 +14,7 @@ export function useUIActions(
     showError: (msg: string) => void,
     showInfo: (msg: string) => void
 ) {
-    const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+    const [theme, setTheme] = useState<'dark' | 'light'>('light');
     const [shareLink, setShareLink] = useState('');
     const [showShareModal, setShowShareModal] = useState(false);
     const [showWhatIfModal, setShowWhatIfModal] = useState(false);
