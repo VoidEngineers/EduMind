@@ -18,3 +18,14 @@ Performance tests
 
   dockerize the XAI mnodel
   setup the apache airflow for the model 
+
+
+
+
+ * - React Hook Form integration
+ * - Zustand global state management
+ * - TanStack Query for server state
+ * - Auto-save functionality
+ * - Conditional rendering logic
+
+
