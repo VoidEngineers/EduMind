@@ -2,7 +2,7 @@ import { type FieldError, type UseFormRegister } from 'react-hook-form';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 
-interface FormFieldProps {
+type FormFieldProps = {
     label: string;
     name: string;
     type?: 'text' | 'number' | 'email' | 'password';

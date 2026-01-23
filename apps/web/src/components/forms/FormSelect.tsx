@@ -7,13 +7,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from '../ui/select';
+import type { SelectOption } from './types';
 
-interface SelectOption {
-    value: string;
-    label: string;
-}
-
-interface FormSelectProps {
+type FormSelectProps = {
     label: string;
     name: string;
     options: SelectOption[];
