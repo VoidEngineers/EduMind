@@ -1,4 +1,4 @@
-import type { StudentRiskRequest } from '../services/xaiService';
+import type { StudentRiskRequest } from '../../core/services/xaiService';
 
 export type PredictionFormProps = {
     formData: StudentRiskRequest;

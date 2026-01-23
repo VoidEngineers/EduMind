@@ -1,4 +1,4 @@
-import type { StudentRiskRequest,RiskPredictionResponse } from '../services/xaiService';
+import type { RiskPredictionResponse, StudentRiskRequest } from '../services/xaiService';
 
 export type ActionItem = {
     id: string;

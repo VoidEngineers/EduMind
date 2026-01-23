@@ -19,7 +19,6 @@ const INITIAL_FORM_DATA: StudentRiskRequest = {
 
 /**
  * XAI Context - Provides all state and actions to child components
- * Eliminates prop drilling and improves decoupling
  */
 const XAIContext = createContext<ReturnType<typeof useXAIState> | null>(null);
 
@@ -32,10 +31,10 @@ function useXAIState() {
     const actionPlan = useActionPlan(prediction.prediction?.risk_level);
 
     // UI hooks
-    const ui = useUIActions(prediction.prediction ?? null, form.formData, actionPlan.actionPlan, toast.showSuccess, toast.showError, toast.showInfo); // TODO : Check the null values
+    const ui = useUIActions(prediction.prediction ?? null, form.formData, actionPlan.actionPlan, toast.showSuccess, toast.showError, toast.showInfo);
     const modal = useCustomActionModal(actionPlan.addAction, toast.showSuccess);
     const filter = useSearchFilter();
-    const aria = useAriaAnnouncements(prediction.prediction ?? null, prediction.isError, prediction.error, toast.showSuccess, toast.showError); // TODO : Check the null values
+    const aria = useAriaAnnouncements(prediction.prediction ?? null, prediction.isError, prediction.error, toast.showSuccess, toast.showError);
 
     return {
         prediction,
@@ -49,6 +48,7 @@ function useXAIState() {
         aria
     };
 }
+
 /**
  * Provider component that wraps the XAI feature
  */
@@ -59,7 +59,6 @@ export function XAIProvider({ children }: XAIProviderProps) {
 
 /**
  * Hook to access XAI context
- * Throws error if used outside provider
  */
 export function useXAI() {
     const context = useContext(XAIContext);

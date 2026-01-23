@@ -30,9 +30,8 @@ export function PredictionForm({
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Left Column: Identity & Performance */}
+                {/* Left Column */}
                 <div className="space-y-8">
-                    {/* 1. Student Info */}
                     <Card className="shadow-sm border-muted">
                         <CardHeader className="pb-4 border-b">
                             <CardTitle className="flex items-center gap-2 text-lg font-semibold">
@@ -48,7 +47,6 @@ export function PredictionForm({
                         </CardContent>
                     </Card>
 
-                    {/* 2. Academic Performance */}
                     <Card className="shadow-sm border-muted">
                         <CardHeader className="pb-4 border-b">
                             <CardTitle className="flex items-center gap-2 text-lg font-semibold">
@@ -65,9 +63,8 @@ export function PredictionForm({
                     </Card>
                 </div>
 
-                {/* Right Column: Engagement & History */}
+                {/* Right Column */}
                 <div className="space-y-8">
-                    {/* 3. Engagement Metrics */}
                     <Card className="shadow-sm border-muted">
                         <CardHeader className="pb-4 border-b">
                             <CardTitle className="flex items-center gap-2 text-lg font-semibold">
@@ -83,7 +80,6 @@ export function PredictionForm({
                         </CardContent>
                     </Card>
 
-                    {/* 4. Historical Data */}
                     <Card className="shadow-sm border-muted">
                         <CardHeader className="pb-4 border-b">
                             <CardTitle className="flex items-center gap-2 text-lg font-semibold">
@@ -102,7 +98,7 @@ export function PredictionForm({
                 </div>
             </div>
 
-            {/* Form Footer Actions */}
+            {/* Form Footer */}
             <div className="sticky bottom-0 z-10 mx-auto max-w-full bg-background border-t p-4 shadow-lg -mx-6 -mb-6 mt-6 flex justify-center">
                 <div className="w-full max-w-4xl">
                     <FormActions

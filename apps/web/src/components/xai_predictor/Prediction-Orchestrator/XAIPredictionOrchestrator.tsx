@@ -1,7 +1,6 @@
 /**
  * XAI Prediction Orchestrator
- * Contains all business logic and state management for XAI Prediction
- * Separated from main component for better testability and maintainability
+ * Restored to working version with Context API
  */
 
 import { useXAI } from '../core/context/XAIContext';
@@ -13,14 +12,6 @@ import { ModelDownFallback } from '../ui/fallbacks/ModelDownFallback';
 import { ErrorDisplay, XAILayout } from '../ui/layout/XAILayout';
 import { XAIModals } from '../ui/modals-container/XAIModals';
 
-/**
- * Orchestrator component that manages all XAI Prediction logic
- * This component handles:
- * - State access from context
- * - Hook composition
- * - Conditional rendering logic
- * - Layout and structure
- */
 export function XAIPredictionOrchestrator() {
     // Access all context state
     const { prediction, modelHealth, toast, form, actionPlan, ui, modal, filter, aria } = useXAI();
