@@ -11,3 +11,23 @@ export type { AdminFilters, DashboardStats } from './adminStore';
 export { useActionPlan, useFormData, useXAIFilters, useXAIStore } from './xaiStore';
 export type { ActionItem, XAIFilters } from './xaiStore';
 
+// Learning Style Predictor Store
+export {
+    useLearningStyleFormData,
+    useLearningStyleResult, useLearningStyleStore
+} from './learningStyleStore';
+export type {
+    LearningStyleFilters, LearningStyleFormData,
+    LearningStyleResult, LearningStyleType
+} from './learningStyleStore';
+
+// Engagement Predictor Store
+export {
+    useEngagementFormData,
+    useEngagementResult, useEngagementStore, useInterventions
+} from './engagementStore';
+export type {
+    EngagementFilters, EngagementFormData, EngagementLevel, EngagementResult,
+    InterventionItem
+} from './engagementStore';
+
