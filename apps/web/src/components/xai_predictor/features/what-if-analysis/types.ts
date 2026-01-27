@@ -1,4 +1,4 @@
-import type { RiskPredictionResponse, StudentRiskRequest } from '../services/xaiService';
+import type { RiskPredictionResponse, StudentRiskRequest } from '../../core/services/xaiService';
 export type WhatIfModalProps = {
     show: boolean;
     onClose: () => void;

@@ -1,5 +1,5 @@
-import type { ActionItem } from '../prediction-state/types';
-import type { RiskPredictionResponse } from '../services/xaiService';
+import type { ActionItem } from '@/store/xaiStore';
+import type { RiskPredictionResponse } from '../../core/services/xaiService';
 
 export type ActionPlanSectionProps = {
     prediction: RiskPredictionResponse;
