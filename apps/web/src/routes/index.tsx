@@ -1,8 +1,8 @@
-import Engagement from '@/Engagement';
-import LearningStyle from '@/LearningStyle';
-import UserSignin from '@/components/User-Signin/UserSignin';
 import AdminApp from '@/components/Admin-App/AdminApp';
 import AdminSignin from '@/components/Admin-Signin/AdminSignin';
+import LearningStylePredictor from '@/components/Learning-style-predictor/LearningStylePredictor';
+import UserSignin from '@/components/User-Signin/UserSignin';
+import EngagementPredictor from '@/components/engagement-predictor/EngagementPredictor';
 import { Navbar } from '@/components/landing/Navbar';
 import XAIPrediction from '@/components/xai_predictor/XAIPredictor';
 import Docs from '@/pages/Docs';
@@ -59,7 +59,7 @@ const engagementRoute = createRoute({
     component: () => (
         <>
             <Navbar />
-            <Engagement />
+            <EngagementPredictor />
         </>
     ),
 });
@@ -70,7 +70,7 @@ const learningStyleRoute = createRoute({
     component: () => (
         <>
             <Navbar />
-            <LearningStyle />
+            <LearningStylePredictor />
         </>
     ),
 });

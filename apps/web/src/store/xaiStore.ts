@@ -19,6 +19,13 @@ export interface XAIFilters {
     showCompleted: boolean;
 }
 
+export interface NewActionItem {
+    title: string;
+    description: string;
+    priority: 'critical' | 'high' | 'medium' | 'standard';
+    category: 'academic' | 'engagement' | 'time-management' | 'support';
+}
+
 interface XAIState {
     // Form state
     formData: StudentRiskRequest;
@@ -27,8 +34,14 @@ interface XAIState {
     // UI state
     isWhatIfModalOpen: boolean;
     isCustomActionModalOpen: boolean;
+    isShareModalOpen: boolean;
     activeTab: string;
     searchQuery: string;
+    shareLink: string;
+    theme: 'light' | 'dark';
+
+    // Custom action modal form state
+    newActionItem: NewActionItem;
 
     // Action plan state
     actionPlan: ActionItem[];
@@ -38,7 +51,7 @@ interface XAIState {
 
     // Actions - Form
     updateFormData: (data: Partial<StudentRiskRequest>) => void;
-    setFormData: (data: StudentRiskRequest) => void;
+    setFormData: (data: StudentRiskRequest | ((prev: StudentRiskRequest) => StudentRiskRequest)) => void;
     saveDraft: () => void;
     loadDraft: () => void;
     clearDraft: () => void;
@@ -47,8 +60,17 @@ interface XAIState {
     // Actions - UI
     setWhatIfModalOpen: (isOpen: boolean) => void;
     setCustomActionModalOpen: (isOpen: boolean) => void;
+    setShareModalOpen: (isOpen: boolean) => void;
     setActiveTab: (tab: string) => void;
     setSearchQuery: (query: string) => void;
+    setShareLink: (link: string) => void;
+    setTheme: (theme: 'light' | 'dark') => void;
+    toggleTheme: () => void;
+
+    // Actions - Custom Action Modal Form
+    updateNewActionItem: (field: keyof NewActionItem, value: string) => void;
+    resetNewActionItem: () => void;
+    submitNewAction: () => void;
 
     // Actions - Action Plan
     setActionPlan: (plan: ActionItem[]) => void;
@@ -86,6 +108,13 @@ const INITIAL_FILTERS: XAIFilters = {
     showCompleted: true,
 };
 
+const INITIAL_NEW_ACTION_ITEM: NewActionItem = {
+    title: '',
+    description: '',
+    priority: 'standard',
+    category: 'academic',
+};
+
 export const useXAIStore = create<XAIState>()(
     devtools(
         persist(
@@ -95,8 +124,12 @@ export const useXAIStore = create<XAIState>()(
                 formDraft: null,
                 isWhatIfModalOpen: false,
                 isCustomActionModalOpen: false,
+                isShareModalOpen: false,
                 activeTab: 'overview',
                 searchQuery: '',
+                shareLink: '',
+                theme: 'light',
+                newActionItem: INITIAL_NEW_ACTION_ITEM,
                 actionPlan: [],
                 filters: INITIAL_FILTERS,
 
@@ -111,7 +144,13 @@ export const useXAIStore = create<XAIState>()(
                     ),
 
                 setFormData: (data) =>
-                    set({ formData: data }, false, 'setFormData'),
+                    set(
+                        (state) => ({
+                            formData: typeof data === 'function' ? data(state.formData) : data,
+                        }),
+                        false,
+                        'setFormData'
+                    ),
 
                 saveDraft: () =>
                     set(
@@ -155,6 +194,51 @@ export const useXAIStore = create<XAIState>()(
 
                 setSearchQuery: (query) =>
                     set({ searchQuery: query }, false, 'setSearchQuery'),
+
+                setShareModalOpen: (isOpen) =>
+                    set({ isShareModalOpen: isOpen }, false, 'setShareModalOpen'),
+
+                setShareLink: (link) =>
+                    set({ shareLink: link }, false, 'setShareLink'),
+
+                setTheme: (theme) =>
+                    set({ theme }, false, 'setTheme'),
+
+                toggleTheme: () =>
+                    set(
+                        (state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' }),
+                        false,
+                        'toggleTheme'
+                    ),
+
+                // Custom action modal form actions
+                updateNewActionItem: (field, value) =>
+                    set(
+                        (state) => ({
+                            newActionItem: { ...state.newActionItem, [field]: value },
+                        }),
+                        false,
+                        'updateNewActionItem'
+                    ),
+
+                resetNewActionItem: () =>
+                    set({ newActionItem: INITIAL_NEW_ACTION_ITEM }, false, 'resetNewActionItem'),
+
+                submitNewAction: () => {
+                    const { newActionItem, addAction } = get();
+                    if (newActionItem.title.trim()) {
+                        addAction({
+                            title: newActionItem.title,
+                            description: newActionItem.description,
+                            priority: newActionItem.priority,
+                            category: newActionItem.category,
+                        });
+                        set({
+                            newActionItem: INITIAL_NEW_ACTION_ITEM,
+                            isCustomActionModalOpen: false,
+                        }, false, 'submitNewAction');
+                    }
+                },
 
                 // Action plan actions
                 setActionPlan: (plan) =>
@@ -264,6 +348,29 @@ export const useXAIStore = create<XAIState>()(
                     actionPlan: state.actionPlan,
                     filters: state.filters,
                 }),
+                // Merge persisted state with initial state to handle missing fields
+                merge: (persistedState, currentState) => {
+                    const persisted = persistedState as Partial<XAIState> | undefined;
+                    return {
+                        ...currentState,
+                        ...persisted,
+                        // Ensure formData always has all fields by merging with INITIAL_FORM_DATA
+                        formData: {
+                            ...INITIAL_FORM_DATA,
+                            ...(persisted?.formData || {}),
+                        },
+                        // Ensure filters have all fields
+                        filters: {
+                            ...INITIAL_FILTERS,
+                            ...(persisted?.filters || {}),
+                        },
+                        // Ensure newActionItem has all fields
+                        newActionItem: {
+                            ...INITIAL_NEW_ACTION_ITEM,
+                            ...(persisted?.newActionItem || {}),
+                        },
+                    };
+                },
             }
         ),
         { name: 'XAIStore' }

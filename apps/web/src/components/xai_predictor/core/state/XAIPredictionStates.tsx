@@ -3,9 +3,9 @@
  * Encapsulates conditional rendering logic for different prediction states
  */
 
-import { PredictionForm } from '../predictionForm/PredictionForm';
-import { PredictionResults } from '../predictionResult/PredictionResults';
-import { PredictionResultsSkeleton } from '../skeletons/PredictionResultsSkeleton';
+import { PredictionForm } from '../../features/prediction-form/PredictionForm';
+import { PredictionResults } from '../../features/prediction-results/PredictionResults';
+import { PredictionResultsSkeleton } from '../../ui/skeletons/PredictionResultsSkeleton';
 import type { XaiFormStateProps, XaiResultsStateProps } from './types';
 
 // ============================================================================
