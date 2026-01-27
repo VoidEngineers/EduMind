@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sliders } from 'lucide-react';
 import { useState } from 'react';
-import type { RiskPredictionResponse, StudentRiskRequest } from '../services/xaiService';
+import type { RiskPredictionResponse, StudentRiskRequest } from '../../core/services/xaiService';
 import { ChangedMetricsSummary } from './ChangedMetricsSummary';
 import { ModalActions } from './ModalActions';
 import { RiskComparison } from './RiskComparison';
