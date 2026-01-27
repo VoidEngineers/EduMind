@@ -1,18 +1,18 @@
-import type { RiskPredictionResponse, StudentRiskRequest } from '../services/xaiService';
+import type { RiskPredictionResponse, StudentRiskRequest } from '../core/services/xaiService';
 
 /**
  * Export prediction report as PDF
  * Opens a print dialog with formatted report
  */
 export function exportPredictionToPDF(
-    prediction: RiskPredictionResponse,
-    formData: StudentRiskRequest,
-    actionPlan: any[]
+  prediction: RiskPredictionResponse,
+  formData: StudentRiskRequest,
+  actionPlan: any[]
 ) {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) return;
 
-    printWindow.document.write(`
+  printWindow.document.write(`
       <!DOCTYPE html>
       <html>
       <head>
@@ -92,8 +92,8 @@ export function exportPredictionToPDF(
       </html>
     `);
 
-    printWindow.document.close();
-    setTimeout(() => {
-        printWindow.print();
-    }, 250);
+  printWindow.document.close();
+  setTimeout(() => {
+    printWindow.print();
+  }, 250);
 }
