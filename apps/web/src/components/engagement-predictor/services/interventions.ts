@@ -1,4 +1,4 @@
-import type { EngagementResult, InterventionItem } from '@/store/engagementStore';
+import type { EngagementResult, InterventionItem } from '../core/types';
 
 export function generateInterventions(result: EngagementResult): InterventionItem[] {
     const interventions: InterventionItem[] = [];

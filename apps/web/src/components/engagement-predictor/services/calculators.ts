@@ -1,4 +1,4 @@
-import type { EngagementFormData, EngagementLevel, EngagementResult } from '@/store/engagementStore';
+import type { EngagementFormData, EngagementLevel, EngagementResult } from '../core/types';
 import { generateRecommendations } from './recommendations';
 
 /**

@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sliders } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { RiskPredictionResponse, StudentRiskRequest } from '../../core/services/xaiService';
 import { ChangedMetricsSummary } from './ChangedMetricsSummary';
 import { ModalActions } from './ModalActions';
@@ -24,6 +24,14 @@ export function WhatIfModal({
 
     // Update state when formData changes (reset on open usually handled by parent or effect, but here we init state)
     // Note: In a real app, you might want a useEffect to sync scenarioData with formData when modal opens
+    // Update state when formData changes (reset on open usually handled by parent or effect, but here we init state)
+    // Note: In a real app, you might want a useEffect to sync scenarioData with formData when modal opens
+    useEffect(() => {
+        if (show) {
+            setScenarioData(formData);
+            setSimulatedPrediction(null);
+        }
+    }, [show]); // Only reset when modal opens (prevents reset on parent rerenders causing formData ref change)
 
     const handleSliderChange = (field: keyof StudentRiskRequest, value: number) => {
         setScenarioData(prev => ({ ...prev, [field]: value }));

@@ -1,6 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
-import type { EngagementResult } from '@/store/engagementStore';
 import { BookOpen, Clock, Target, Users } from 'lucide-react';
+import type { EngagementResult } from '../../core/types';
 
 interface DetailedScoresGridProps {
     scores: EngagementResult['detailed_scores'];

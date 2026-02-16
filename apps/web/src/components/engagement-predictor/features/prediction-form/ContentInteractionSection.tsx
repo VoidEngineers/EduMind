@@ -3,9 +3,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Target } from 'lucide-react';
-import type { SectionProps } from '../../core/types';
+import { Controller, useFormContext } from 'react-hook-form';
+import type { EngagementSchema } from '../../core/types';
 
-export function ContentInteractionSection({ formData, onInputChange, onSliderChange }: SectionProps) {
+export function ContentInteractionSection() {
+    const { register, control, formState: { errors } } = useFormContext<EngagementSchema>();
     return (
         <Card>
             <CardHeader>
@@ -17,16 +19,25 @@ export function ContentInteractionSection({ formData, onInputChange, onSliderCha
             <CardContent className="space-y-6">
                 <div className="space-y-3">
                     <Label>Video Completion Rate (%)</Label>
-                    <Slider
-                        value={[formData.video_completion_rate]}
-                        onValueChange={(v) => onSliderChange('video_completion_rate', v)}
-                        min={0}
-                        max={100}
-                        step={5}
+                    <Controller
+                        name="video_completion_rate"
+                        control={control}
+                        render={({ field }) => (
+                            <>
+                                <Slider
+                                    value={[field.value]}
+                                    onValueChange={(v) => field.onChange(v[0])}
+                                    min={0}
+                                    max={100}
+                                    step={5}
+                                />
+                                <div className="text-right text-sm text-muted-foreground">
+                                    {field.value}%
+                                </div>
+                            </>
+                        )}
                     />
-                    <div className="text-right text-sm text-muted-foreground">
-                        {formData.video_completion_rate}%
-                    </div>
+                    {errors.video_completion_rate && <p className="text-sm text-destructive">{errors.video_completion_rate.message}</p>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
@@ -34,23 +45,21 @@ export function ContentInteractionSection({ formData, onInputChange, onSliderCha
                         <Label htmlFor="resource_downloads">Resource Downloads/Week</Label>
                         <Input
                             id="resource_downloads"
-                            name="resource_downloads"
                             type="number"
-                            value={formData.resource_downloads}
-                            onChange={onInputChange}
                             min={0}
+                            {...register('resource_downloads', { valueAsNumber: true })}
                         />
+                        {errors.resource_downloads && <p className="text-sm text-destructive">{errors.resource_downloads.message}</p>}
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="time_on_task">Time on Task (min/week)</Label>
                         <Input
                             id="time_on_task"
-                            name="time_on_task"
                             type="number"
-                            value={formData.time_on_task}
-                            onChange={onInputChange}
                             min={0}
+                            {...register('time_on_task', { valueAsNumber: true })}
                         />
+                        {errors.time_on_task && <p className="text-sm text-destructive">{errors.time_on_task.message}</p>}
                     </div>
                 </div>
             </CardContent>

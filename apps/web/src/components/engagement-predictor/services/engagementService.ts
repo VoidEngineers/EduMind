@@ -1,17 +1,18 @@
 /**
  * Engagement Prediction Service
- * Orchestrates engagement prediction logic by composing specialized utilities
+ * Implements IEngagementService interface
  */
 
-import type { EngagementFormData, EngagementResult, InterventionItem } from '@/store/engagementStore';
+import type { EngagementFormData } from '../core/types';
 import { calculateEngagement } from './calculators';
+import type { IEngagementService, PredictionResult, ServiceHealth } from './interfaces';
 import { generateInterventions } from './interventions';
 
-export const engagementService = {
+class EngagementService implements IEngagementService {
     /**
      * Predict engagement based on student data
      */
-    async predictEngagement(data: EngagementFormData): Promise<{ result: EngagementResult; interventions: InterventionItem[] }> {
+    async predictEngagement(data: EngagementFormData): Promise<PredictionResult> {
         // Validate input
         if (!data.student_id) {
             throw new Error('Student ID is required');
@@ -24,12 +25,18 @@ export const engagementService = {
         const interventions = generateInterventions(result);
 
         return { result, interventions };
-    },
+    }
 
     /**
      * Check if service is healthy
      */
-    async checkHealth(): Promise<{ status: 'healthy' | 'degraded' | 'down'; message: string }> {
+    async checkHealth(): Promise<ServiceHealth> {
         return { status: 'healthy', message: 'Engagement Prediction service is operational' };
-    },
-};
+    }
+}
+
+// Export singleton instance
+export const engagementService = new EngagementService();
+
+// Export class for testing/DI purposes
+export { EngagementService };

@@ -3,9 +3,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { BookOpen } from 'lucide-react';
-import type { SectionProps } from '../../core/types';
+import { Controller, useFormContext } from 'react-hook-form';
+import type { EngagementSchema } from '../../core/types';
 
-export function AcademicEngagementSection({ formData, onInputChange, onSliderChange }: SectionProps) {
+export function AcademicEngagementSection() {
+    const { register, control, formState: { errors } } = useFormContext<EngagementSchema>();
     return (
         <Card>
             <CardHeader>
@@ -17,30 +19,48 @@ export function AcademicEngagementSection({ formData, onInputChange, onSliderCha
             <CardContent className="space-y-6">
                 <div className="space-y-3">
                     <Label>Assignments Completed (%)</Label>
-                    <Slider
-                        value={[formData.assignments_completed]}
-                        onValueChange={(v) => onSliderChange('assignments_completed', v)}
-                        min={0}
-                        max={100}
-                        step={5}
+                    <Controller
+                        name="assignments_completed"
+                        control={control}
+                        render={({ field }) => (
+                            <>
+                                <Slider
+                                    value={[field.value]}
+                                    onValueChange={(v) => field.onChange(v[0])}
+                                    min={0}
+                                    max={100}
+                                    step={5}
+                                />
+                                <div className="text-right text-sm text-muted-foreground">
+                                    {field.value}%
+                                </div>
+                            </>
+                        )}
                     />
-                    <div className="text-right text-sm text-muted-foreground">
-                        {formData.assignments_completed}%
-                    </div>
+                    {errors.assignments_completed && <p className="text-sm text-destructive">{errors.assignments_completed.message}</p>}
                 </div>
 
                 <div className="space-y-3">
                     <Label>Assignments On Time (%)</Label>
-                    <Slider
-                        value={[formData.assignments_on_time]}
-                        onValueChange={(v) => onSliderChange('assignments_on_time', v)}
-                        min={0}
-                        max={100}
-                        step={5}
+                    <Controller
+                        name="assignments_on_time"
+                        control={control}
+                        render={({ field }) => (
+                            <>
+                                <Slider
+                                    value={[field.value]}
+                                    onValueChange={(v) => field.onChange(v[0])}
+                                    min={0}
+                                    max={100}
+                                    step={5}
+                                />
+                                <div className="text-right text-sm text-muted-foreground">
+                                    {field.value}%
+                                </div>
+                            </>
+                        )}
                     />
-                    <div className="text-right text-sm text-muted-foreground">
-                        {formData.assignments_on_time}%
-                    </div>
+                    {errors.assignments_on_time && <p className="text-sm text-destructive">{errors.assignments_on_time.message}</p>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
@@ -48,25 +68,23 @@ export function AcademicEngagementSection({ formData, onInputChange, onSliderCha
                         <Label htmlFor="quiz_attempts">Avg Quiz Attempts</Label>
                         <Input
                             id="quiz_attempts"
-                            name="quiz_attempts"
                             type="number"
-                            value={formData.quiz_attempts}
-                            onChange={onInputChange}
                             min={1}
                             step={0.1}
+                            {...register('quiz_attempts', { valueAsNumber: true })}
                         />
+                        {errors.quiz_attempts && <p className="text-sm text-destructive">{errors.quiz_attempts.message}</p>}
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="quiz_scores">Avg Quiz Score (%)</Label>
                         <Input
                             id="quiz_scores"
-                            name="quiz_scores"
                             type="number"
-                            value={formData.quiz_scores}
-                            onChange={onInputChange}
                             min={0}
                             max={100}
+                            {...register('quiz_scores', { valueAsNumber: true })}
                         />
+                        {errors.quiz_scores && <p className="text-sm text-destructive">{errors.quiz_scores.message}</p>}
                     </div>
                 </div>
             </CardContent>

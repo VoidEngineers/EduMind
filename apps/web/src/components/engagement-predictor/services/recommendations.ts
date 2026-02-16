@@ -1,4 +1,4 @@
-import type { EngagementLevel } from '@/store/engagementStore';
+import type { EngagementLevel } from '../core/types';
 
 export function generateRecommendations(level: EngagementLevel, riskFactors: string[]): string[] {
     const recs: string[] = [];

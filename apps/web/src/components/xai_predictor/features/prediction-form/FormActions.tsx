@@ -24,20 +24,6 @@ export function FormActions({ isLoading, isHealthy, onClearDraft }: FormActionsP
                     )}
                 </Button>
             ) : (
-                // This part of the original code was not explicitly removed or modified in the instruction's "Code Edit"
-                // but the instruction implies a change to the *first* button.
-                // The provided "Code Edit" snippet is syntactically incomplete and seems to be trying to
-                // replace the first button with a conditional structure.
-                // Assuming the intent was to replace the *first* button with the new button structure
-                // when isHealthy is true, and perhaps render nothing or a disabled state otherwise,
-                // but the provided snippet for the `else` case is the start of the *second* button's parent div.
-                // Given the instruction "Use standard Button variant and remove gradients" and the provided
-                // "Code Edit" block, the most faithful interpretation is to replace the first button
-                // with the new button structure, including the conditional rendering based on `isHealthy`.
-                // The `else` branch of the `isHealthy` condition in the provided snippet is incomplete.
-                // I will assume the `else` branch should render a disabled version of the button or nothing,
-                // but since the snippet only provides the start of the *next* div, I will complete it
-                // by rendering a disabled button if not healthy, as that aligns with the original `disabled={isLoading || !isHealthy}` logic.
                 <Button
                     type="submit"
                     disabled={true} // Disabled when not healthy

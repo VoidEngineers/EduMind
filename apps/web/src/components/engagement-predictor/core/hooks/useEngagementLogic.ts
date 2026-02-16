@@ -1,66 +1,82 @@
-import { useEngagementStore } from '@/store/engagementStore';
-import { useCallback, useState } from 'react';
-import { engagementService } from '../../services/engagementService';
+/**
+ * Engagement Logic Hook
+ * Orchestrates form state, validation, and service calls
+ * Decoupled from store implementation via state adapter
+ */
 
-export function useEngagementLogic() {
-    const store = useEngagementStore();
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useCallback, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { engagementSchema } from '../../schema';
+import { engagementService as defaultService } from '../../services/engagementService';
+import type { IEngagementService } from '../../services/interfaces';
+import type { EngagementSchema } from '../types';
+import { useEngagementState } from './useEngagementState';
+
+/**
+ * Hook configuration
+ */
+interface UseEngagementLogicConfig {
+    service?: IEngagementService;
+}
+
+export function useEngagementLogic(config: UseEngagementLogicConfig = {}) {
+    const { service = defaultService } = config;
+    const state = useEngagementState();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value, type } = e.target;
-        store.updateFormData({
-            [name]: type === 'number' ? parseFloat(value) : value,
-        });
-    }, [store]);
+    const form = useForm<EngagementSchema>({
+        resolver: zodResolver(engagementSchema),
+        defaultValues: state.formData,
+    });
 
-    const handleSliderChange = useCallback((name: string, value: number[]) => {
-        store.updateFormData({ [name]: value[0] });
-    }, [store]);
-
-    const handleSubmit = useCallback(async (e: React.FormEvent) => {
-        e.preventDefault();
+    const onSubmit = useCallback(async (data: EngagementSchema) => {
         setIsSubmitting(true);
-        store.setLoading(true);
-        store.setError(null);
+        state.actions.setLoading(true);
+        state.actions.setError(null);
 
         try {
-            const { result, interventions } = await engagementService.predictEngagement(store.formData);
-            store.setResult(result);
-            store.setInterventions(interventions);
-            store.setActiveTab('results');
+            // Update store with final data
+            state.actions.setFormData(data);
+
+            const { result, interventions } = await service.predictEngagement(data);
+            state.actions.setResult(result);
+            state.actions.setInterventions(interventions);
+            state.actions.setActiveTab('results');
         } catch (error) {
-            store.setError(error instanceof Error ? error.message : 'Prediction failed');
+            state.actions.setError(error instanceof Error ? error.message : 'Prediction failed');
         } finally {
             setIsSubmitting(false);
-            store.setLoading(false);
+            state.actions.setLoading(false);
         }
-    }, [store]);
+    }, [state, service]);
 
     const handleReset = useCallback(() => {
-        store.resetForm();
-        store.clearResults();
-        store.setActiveTab('form');
-    }, [store]);
+        state.actions.resetForm();
+        state.actions.clearResults();
+        state.actions.setActiveTab('form');
+        form.reset(state.formData);
+    }, [state, form]);
 
     const handleToggleIntervention = useCallback((id: string) => {
-        store.toggleInterventionComplete(id);
-    }, [store]);
+        state.actions.toggleInterventionComplete(id);
+    }, [state]);
 
     return {
-        // State
-        formData: store.formData,
-        result: store.result,
-        interventions: store.interventions,
-        activeTab: store.activeTab,
-        error: store.error,
-        isLoading: store.isLoading,
+        // Form RHF
+        form,
+        onSubmit: form.handleSubmit(onSubmit),
+
+        // State (Legacy/Results)
+        result: state.result,
+        interventions: state.interventions,
+        activeTab: state.activeTab,
+        error: state.error,
+        isLoading: state.isLoading,
         isSubmitting,
-        progress: store.getInterventionProgress(),
+        progress: state.computed.interventionProgress,
 
         // Handlers
-        handleInputChange,
-        handleSliderChange,
-        handleSubmit,
         handleReset,
         handleToggleIntervention
     };

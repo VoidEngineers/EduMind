@@ -3,7 +3,9 @@
  * Mock service for learning style predictions
  */
 
-import type { LearningStyleFormData, LearningStyleResult, LearningStyleType } from '@/store/learningStyleStore';
+import type { LearningStyleFormData, LearningStyleResult, LearningStyleType } from '../core/types';
+import type { HealthCheckResponse, ILearningStyleService } from '../data/interfaces';
+
 
 // Mock API delay
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -104,7 +106,7 @@ function generateRecommendations(primary: LearningStyleType, secondary: Learning
     return [...primaryRecs.slice(0, 3), ...secondaryRecs.slice(0, 1)];
 }
 
-export const learningStyleService = {
+export const learningStyleService: ILearningStyleService = {
     /**
      * Predict learning style based on student data
      */
@@ -123,7 +125,7 @@ export const learningStyleService = {
     /**
      * Check if service is healthy
      */
-    async checkHealth(): Promise<{ status: 'healthy' | 'degraded' | 'down'; message: string }> {
+    async checkHealth(): Promise<HealthCheckResponse> {
         await delay(200);
         return { status: 'healthy', message: 'Learning Style Prediction service is operational' };
     },

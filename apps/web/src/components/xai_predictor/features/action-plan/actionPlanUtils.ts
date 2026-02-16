@@ -11,7 +11,7 @@ import {
     type LucideIcon
 } from 'lucide-react';
 
-import type { ActionItem } from '@/store/xaiStore';
+import type { ActionItem } from '@/store/xai';
 
 /**
  * Category configuration

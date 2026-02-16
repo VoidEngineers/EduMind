@@ -1,12 +1,12 @@
-import { type FieldError, type UseFormRegister } from 'react-hook-form';
+import { type FieldError, type FieldValues, type Path, type UseFormRegister } from 'react-hook-form';
 import { Label } from '../ui/label';
 
-interface FormTextareaProps {
+interface FormTextareaProps<T extends FieldValues> {
     label: string;
-    name: string;
+    name: Path<T>;
     placeholder?: string;
     error?: FieldError;
-    register: UseFormRegister<any>;
+    register: UseFormRegister<T>;
     required?: boolean;
     rows?: number;
     maxLength?: number;
@@ -17,7 +17,7 @@ interface FormTextareaProps {
 /**
  * Reusable textarea field component with React Hook Form integration
  */
-export function FormTextarea({
+export function FormTextarea<T extends FieldValues>({
     label,
     name,
     placeholder,
@@ -28,7 +28,7 @@ export function FormTextarea({
     maxLength,
     disabled = false,
     helperText,
-}: FormTextareaProps) {
+}: FormTextareaProps<T>) {
     return (
         <div className="space-y-2">
             <Label htmlFor={name} className="text-sm font-medium">
@@ -42,7 +42,7 @@ export function FormTextarea({
                 disabled={disabled}
                 rows={rows}
                 maxLength={maxLength}
-                aria-invalid={error ? 'true' : 'false'}
+                {...(error && { 'aria-invalid': true })}
                 aria-describedby={error ? `${name}-error` : helperText ? `${name}-helper` : undefined}
                 className={`flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${error ? 'border-destructive focus-visible:ring-destructive' : ''
                     }`}

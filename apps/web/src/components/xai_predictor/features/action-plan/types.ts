@@ -1,4 +1,4 @@
-import type { ActionItem } from '@/store/xaiStore';
+import type { ActionItem } from '@/store/xai';
 import type { RiskPredictionResponse } from '../../core/services/xaiService';
 
 export type ActionPlanSectionProps = {

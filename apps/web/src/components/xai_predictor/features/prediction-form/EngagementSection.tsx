@@ -1,9 +1,11 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { BookOpen, Clock } from 'lucide-react';
-import type { EngagementSectionProps } from './types';
+import { Controller, useFormContext } from 'react-hook-form';
+import type { StudentRiskRequest } from '../../core/schemas/xai.schemas';
 
-export function EngagementSection({ formData, onInputChange }: EngagementSectionProps) {
+export function EngagementSection() {
+    const { register, control, formState: { errors } } = useFormContext<StudentRiskRequest>();
     return (
         <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -13,27 +15,28 @@ export function EngagementSection({ formData, onInputChange }: EngagementSection
                         Completion Rate
                     </Label>
                     <div className="relative">
-                        <Input
-                            id="assessment_completion_rate"
-                            type="number"
+                        <Controller
+                            control={control}
                             name="assessment_completion_rate"
-                            value={formData.assessment_completion_rate}
-                            onChange={onInputChange}
-                            min="0"
-                            max="1"
-                            step="0.01"
-                            required
-                            placeholder="0.0 - 1.0"
-                            aria-describedby="completion_rate_hint"
-                            className="bg-background border-input focus:border-primary focus:ring-1 focus:ring-primary pr-16"
+                            render={({ field }) => (
+                                <Input
+                                    {...field}
+                                    id="assessment_completion_rate"
+                                    type="number"
+                                    min="0"
+                                    max="1"
+                                    step="0.01"
+                                    placeholder="0.0 - 1.0"
+                                    className="bg-background border-input focus:border-primary focus:ring-1 focus:ring-primary pr-16"
+                                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                                />
+                            )}
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-600 font-semibold pointer-events-none">
-                            {(formData.assessment_completion_rate * 100).toFixed(0)}%
+                            Rate
                         </span>
                     </div>
-                    <span id="completion_rate_hint" className="block text-sm text-muted-foreground italic">
-                        Decimal value (0 = 0%, 1 = 100%)
-                    </span>
+                    {errors.assessment_completion_rate && <p className="text-sm text-destructive">{errors.assessment_completion_rate.message}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -44,18 +47,12 @@ export function EngagementSection({ formData, onInputChange }: EngagementSection
                     <Input
                         id="studied_credits"
                         type="number"
-                        name="studied_credits"
-                        value={formData.studied_credits}
-                        onChange={onInputChange}
+                        {...register('studied_credits', { valueAsNumber: true })}
                         min="0"
-                        required
                         placeholder="Total credits"
-                        aria-describedby="studied_credits_hint"
                         className="bg-background border-input focus:border-primary focus:ring-1 focus:ring-primary"
                     />
-                    <span id="studied_credits_hint" className="block text-sm text-muted-foreground italic">
-                        Course credits enrolled
-                    </span>
+                    {errors.studied_credits && <p className="text-sm text-destructive">{errors.studied_credits.message}</p>}
                 </div>
             </div>
         </div>

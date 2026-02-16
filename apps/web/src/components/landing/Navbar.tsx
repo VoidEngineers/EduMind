@@ -69,7 +69,7 @@ export function Navbar() {
                         <div className="hidden md:flex items-center gap-8">
                             <button
                                 onClick={() => scrollToSection('features')}
-                                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors relative group"
+                                className="text-sm font-medium text-foreground hover:text-primary transition-colors relative group"
                             >
                                 Features
                                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-300 group-hover:w-full" />
@@ -78,7 +78,7 @@ export function Navbar() {
                             {/* Solutions Dropdown */}
                             <div className="relative group">
                                 <button
-                                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors relative flex items-center gap-1"
+                                    className="text-sm font-medium text-foreground hover:text-primary transition-colors relative flex items-center gap-1"
                                 >
                                     Solutions
                                     <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-300 group-hover:w-full opacity-0 group-hover:opacity-100" />
@@ -105,7 +105,7 @@ export function Navbar() {
 
                             <button
                                 onClick={() => navigate({ to: '/pricing' })}
-                                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors relative group"
+                                className="text-sm font-medium text-foreground hover:text-primary transition-colors relative group"
                             >
                                 Pricing
                                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-300 group-hover:w-full" />
@@ -113,7 +113,7 @@ export function Navbar() {
 
                             <button
                                 onClick={() => navigate({ to: '/docs' })}
-                                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors relative group"
+                                className="text-sm font-medium text-foreground hover:text-primary transition-colors relative group"
                             >
                                 Docs
                                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-300 group-hover:w-full" />

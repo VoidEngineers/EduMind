@@ -1,9 +1,8 @@
-import type { StudentRiskRequest } from '../../core/services/xaiService';
+import type { UseFormReturn } from 'react-hook-form';
+import type { StudentRiskRequest } from '../../core/schemas/xai.schemas';
 
 export type PredictionFormProps = {
-    formData: StudentRiskRequest;
-    onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    onSelectChange: (field: string, value: number) => void;
+    form: UseFormReturn<StudentRiskRequest>;
     onSubmit: (e: React.FormEvent) => void;
     onClearDraft: () => void;
     isLoading: boolean;
@@ -16,23 +15,8 @@ export type FormActionsProps = {
     onClearDraft: () => void;
 }
 
-export type EngagementSectionProps = {
-    formData: StudentRiskRequest;
-    onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}
-
-export type HistoricalDataSectionProps = {
-    formData: StudentRiskRequest;
-    onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    onSelectChange: (field: string, value: number) => void;
-}
-
-export type AcademicPerformanceSectionProps = {
-    formData: StudentRiskRequest;
-    onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}
-
-export type StudentInfoSectionProps = {
-    formData: StudentRiskRequest;
-    onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}
+// Sections no longer need props as they use context
+export type EngagementSectionProps = {}
+export type HistoricalDataSectionProps = {}
+export type AcademicPerformanceSectionProps = {}
+export type StudentInfoSectionProps = {}

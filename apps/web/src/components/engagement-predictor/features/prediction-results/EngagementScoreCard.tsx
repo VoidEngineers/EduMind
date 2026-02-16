@@ -1,7 +1,7 @@
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import type { EngagementResult } from '@/store/engagementStore';
 import { Activity, Minus, TrendingDown, TrendingUp } from 'lucide-react';
 import { levelColors, levelLabels } from '../../core/constants';
+import type { EngagementResult } from '../../core/types';
 
 interface EngagementScoreCardProps {
     result: EngagementResult;

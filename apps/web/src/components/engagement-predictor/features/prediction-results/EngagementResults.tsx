@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
-import type { EngagementResult, InterventionItem } from '@/store/engagementStore';
 import { Activity, RotateCcw } from 'lucide-react';
+import type { EngagementResult, InterventionItem } from '../../core/types';
 import { DetailedScoresGrid } from './DetailedScoresGrid';
 import { EngagementScoreCard } from './EngagementScoreCard';
 import { InterventionPlan } from './InterventionPlan';

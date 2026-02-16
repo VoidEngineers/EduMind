@@ -1,25 +1,29 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { SectionProps } from '../../core/types';
+import { User } from 'lucide-react';
+import { useFormContext } from 'react-hook-form';
+import type { EngagementSchema } from '../../core/types';
 
-export function StudentInfoSection({ formData, onInputChange }: Omit<SectionProps, 'onSliderChange'>) {
+export function StudentInfoSection() {
+    const { register, formState: { errors } } = useFormContext<EngagementSchema>();
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Student Information</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Student Information
+                </CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="space-y-2">
                     <Label htmlFor="student_id">Student ID</Label>
                     <Input
                         id="student_id"
-                        name="student_id"
-                        value={formData.student_id}
-                        onChange={onInputChange}
                         placeholder="Enter student ID"
-                        required
+                        {...register('student_id')}
                     />
+                    {errors.student_id && <p className="text-sm text-destructive">{errors.student_id.message}</p>}
                 </div>
             </CardContent>
         </Card>

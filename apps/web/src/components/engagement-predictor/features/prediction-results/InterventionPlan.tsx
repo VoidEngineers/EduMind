@@ -2,8 +2,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
-import type { InterventionItem } from '@/store/engagementStore';
 import { Target } from 'lucide-react';
+import type { InterventionItem } from '../../core/types';
 
 interface InterventionPlanProps {
     interventions: InterventionItem[];

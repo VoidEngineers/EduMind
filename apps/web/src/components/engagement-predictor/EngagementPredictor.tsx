@@ -10,31 +10,27 @@ import { EngagementResults } from './features/prediction-results/EngagementResul
 
 export function EngagementPredictor() {
     const {
-        // State
-        formData,
+        form,
         result,
         interventions,
         activeTab,
         error,
         isSubmitting,
         progress,
-
-        // Handlers
-        handleInputChange,
-        handleSliderChange,
-        handleSubmit,
+        onSubmit,
         handleReset,
         handleToggleIntervention
     } = useEngagementLogic();
 
     // Show results if available
     if (result && activeTab === 'results') {
+        const currentFormData = form.getValues(); // Get latest form data for results view if needed
         return (
             <EngagementResults
                 result={result}
                 interventions={interventions}
                 progress={progress}
-                studentId={formData.student_id}
+                studentId={currentFormData.student_id}
                 onReset={handleReset}
                 onToggleIntervention={handleToggleIntervention}
             />
@@ -55,10 +51,8 @@ export function EngagementPredictor() {
             </div>
 
             <EngagementForm
-                formData={formData}
-                onInputChange={handleInputChange}
-                onSliderChange={handleSliderChange}
-                onSubmit={handleSubmit}
+                form={form}
+                onSubmit={onSubmit}
                 onReset={handleReset}
                 isSubmitting={isSubmitting}
                 error={error}
