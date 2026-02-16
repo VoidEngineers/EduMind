@@ -29,3 +29,162 @@ Performance tests
  * - Conditional rendering logic
 
 
+
+ Benefits of Using Repository Folders for Components
+1. Data Abstraction Layer
+The component only knows "get me predictions" — not whether it comes from localStorage, API, IndexedDB, or a database.
+
+// Component doesn't care HOW data is stored
+const predictions = await xaiRepository.findByStudentId(studentId);
+
+// Tomorrow, you can switch from LocalStorage to API without changing components
+
+
+2. Centralized Data Logic
+All data access goes through one place, making changes easier.
+
+// ❌ Without Repository (scattered logic in components)
+Component A: localStorage.getItem('xai-predictions')
+Component B: localStorage.getItem('xai-predictions')
+Component C: localStorage.getItem('xai-predictions')
+
+// ✅ With Repository (single source of truth)
+Component A: xaiRepository.getHistory()
+Component B: xaiRepository.getLatestForStudent()
+Component C: xaiRepository.findByRiskLevel()
+
+
+
+3. Complex Query Methods
+Your xaiRepository.ts provides domain-specific queries:
+
+  // Instead of filtering in every component
+const highRisk = await xaiRepository.getHighRiskPredictions();
+const trend = await xaiRepository.getRiskTrend(studentId);
+const hasRisk = await xaiRepository.hasHighRiskHistory(studentId);
+
+These encapsulate business logic for risk analysis.
+
+4. Easier Testing
+
+// Mock the repository, not localStorage
+const mockRepository = {
+    findByStudentId: jest.fn().mockResolvedValue([mockData])
+};
+
+// Test component without touching real storage
+<XAIComponent repository={mockRepository} />
+
+5. Type Safety
+
+export interface StoredXAIResult extends XAIResult {
+    id?: string;
+    studentId: string;
+    timestamp: string;
+}
+
+// TypeScript ensures all stored predictions have these fields
+await xaiRepository.create(prediction); // Type-checked ✅
+
+
+6. Caching & Performance
+The repository can implement caching strategies:
+
+  class XAIRepository {
+    private cache: Map<string, StoredXAIResult[]> = new Map();
+    
+    async findByStudentId(id: string) {
+        if (this.cache.has(id)) return this.cache.get(id);
+        
+        const results = await this.loadFromStorage(id);
+        this.cache.set(id, results);
+        return results;
+    }
+}
+
+Components don't need to know about caching logic.
+
+7. Easy Migration Path
+Current setup (LocalStorage):
+
+  export class XAIRepository extends LocalStorageRepository<StoredXAIResult> {
+    constructor() {
+        super('xai-predictions');
+    }
+}
+
+Future (API-backed):
+
+  export class XAIRepository extends ApiRepository<StoredXAIResult> {
+    constructor() {
+        super('/api/xai/predictions');
+    }
+    
+    // Same methods, different implementation
+    async findByStudentId(id: string) {
+        return this.get(`/student/${id}`);
+    }
+}
+
+No component changes needed! Just swap the base class.
+
+8. Data Consistency
+
+// Repository ensures consistent data format
+async create(data: Partial<StoredXAIResult>) {
+    const normalized = {
+        ...data,
+        id: data.id || generateId(),
+        timestamp: data.timestamp || new Date().toISOString()
+    };
+    return super.create(normalized);
+}
+
+All predictions are stored with IDs and timestamps, guaranteed.
+
+9. Separation of Concerns
+
+┌─────────────────────────────────────────────────────────┐
+│  Component Layer        │  What user sees (UI)          │
+├─────────────────────────────────────────────────────────┤
+│  Service Layer          │  Business logic (predictions) │
+├─────────────────────────────────────────────────────────┤
+│  Repository Layer       │  Data storage & retrieval     │
+├─────────────────────────────────────────────────────────┤
+│  Storage Layer          │  LocalStorage / API / DB      │
+└─────────────────────────────────────────────────────────┘
+
+Each layer has a single responsibility.
+
+10. Real-World Example in Your Code
+
+// apps/web/src/components/xai_predictor/data/index.ts
+export * from './interfaces';
+export * from './repositories/xaiRepository';
+
+// Components import from ONE place
+import { xaiRepository, IXAIService } from '@/components/xai_predictor/data';
+
+// Clean, organized, maintainable ✨
+
+
+Summary
+
+
+Without Repository
+
+Components talk to localStorage directly
+Storage logic scattered everywhere	
+Hard to test (mocking localStorage)	
+Hard to switch storage backends
+No type safety for stored data
+No caching/optimization
+
+With Repository	
+
+Components talk to repository
+Centralized in repository
+Easy to mock repository
+Change base class only
+Full TypeScript types
+Repository handles it
