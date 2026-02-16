@@ -3,6 +3,7 @@
  * Handles all API calls to the XAI backend service with validation
  */
 
+import type { IXAIService } from '../../data/interfaces';
 import { XAIError } from '../errors/XAIError';
 import {
     HealthResponseSchema,
@@ -15,7 +16,7 @@ import {
 
 const API_BASE_URL = import.meta.env.VITE_XAI_API_URL || 'http://localhost:8000';
 
-class XAIService {
+class XAIService implements IXAIService {
     private baseURL: string;
 
     constructor(baseURL: string = API_BASE_URL) {

@@ -9,17 +9,20 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements
-COPY requirements.txt .
+COPY services/service-xai-prediction/requirements.txt .
 
 # Upgrade pip and install dependencies
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r requirements.txt
 
+# Copy shared module
+COPY shared/ /app/backend/shared/
+
 # Copy application code
-COPY app/ ./app/
+COPY services/service-xai-prediction/app/ ./app/
 
 # Copy saved models
-COPY saved_models/ ./saved_models/
+COPY services/service-xai-prediction/saved_models/ ./saved_models/
 
 # Create non-root user
 RUN groupadd -r appuser && useradd -r -g appuser appuser

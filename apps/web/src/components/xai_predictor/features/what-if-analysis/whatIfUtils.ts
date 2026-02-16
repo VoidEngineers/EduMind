@@ -1,5 +1,5 @@
-import type { RiskPredictionResponse, StudentRiskRequest } from '../services/xaiService';
-import type { MetricConfig, ChangedMetric, RiskChange } from './types';
+import type { RiskPredictionResponse, StudentRiskRequest } from '../../core/services/xaiService';
+import type { ChangedMetric, MetricConfig, RiskChange } from './types';
 
 export const metricConfigs: MetricConfig[] = [
     { field: 'avg_grade', label: 'Average Grade', unit: '%' },

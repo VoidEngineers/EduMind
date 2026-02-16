@@ -1,0 +1,255 @@
+{
+  "rabbit_version": "3.12",
+  "rabbitmq_version": "3.12",
+  "product_name": "RabbitMQ",
+  "product_version": "3.12",
+  "users": [
+    {
+      "name": "edumind_admin",
+      "password_hash": "",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": ["administrator"],
+      "limits": {}
+    },
+    {
+      "name": "edumind_user_service",
+      "password_hash": "",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": [],
+      "limits": {}
+    },
+    {
+      "name": "edumind_xai_service",
+      "password_hash": "",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": [],
+      "limits": {}
+    },
+    {
+      "name": "edumind_engagement_service",
+      "password_hash": "",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": [],
+      "limits": {}
+    },
+    {
+      "name": "edumind_learning_style_service",
+      "password_hash": "",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": [],
+      "limits": {}
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "/"
+    },
+    {
+      "name": "edumind"
+    },
+    {
+      "name": "edumind_dev"
+    },
+    {
+      "name": "edumind_test"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "edumind_admin",
+      "vhost": "edumind",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "edumind_user_service",
+      "vhost": "edumind",
+      "configure": "^(user\\.|edumind\\.user\\.).*",
+      "write": "^(user\\.|edumind\\.user\\.|edumind\\.events\\.).*",
+      "read": "^(user\\.|edumind\\.user\\.|edumind\\.events\\.).*"
+    },
+    {
+      "user": "edumind_xai_service",
+      "vhost": "edumind",
+      "configure": "^(xai\\.|edumind\\.xai\\.).*",
+      "write": "^(xai\\.|edumind\\.xai\\.|edumind\\.events\\.).*",
+      "read": "^(xai\\.|edumind\\.xai\\.|edumind\\.events\\.).*"
+    },
+    {
+      "user": "edumind_engagement_service",
+      "vhost": "edumind",
+      "configure": "^(engagement\\.|edumind\\.engagement\\.).*",
+      "write": "^(engagement\\.|edumind\\.engagement\\.|edumind\\.events\\.).*",
+      "read": "^(engagement\\.|edumind\\.engagement\\.|edumind\\.events\\.).*"
+    },
+    {
+      "user": "edumind_learning_style_service",
+      "vhost": "edumind",
+      "configure": "^(learning_style\\.|edumind\\.learning_style\\.).*",
+      "write": "^(learning_style\\.|edumind\\.learning_style\\.|edumind\\.events\\.).*",
+      "read": "^(learning_style\\.|edumind\\.learning_style\\.|edumind\\.events\\.).*"
+    }
+  ],
+  "topic_permissions": [],
+  "parameters": [],
+  "global_parameters": [
+    {
+      "name": "cluster_name",
+      "value": "edumind-rabbitmq-cluster"
+    }
+  ],
+  "policies": [
+    {
+      "vhost": "edumind",
+      "name": "ha-queues",
+      "pattern": "^edumind\\.",
+      "apply-to": "queues",
+      "definition": {
+        "ha-mode": "all",
+        "ha-sync-mode": "automatic",
+        "queue-mode": "lazy"
+      },
+      "priority": 0
+    },
+    {
+      "vhost": "edumind",
+      "name": "dlx-policy",
+      "pattern": "^(user|xai|engagement|learning_style)\\.",
+      "apply-to": "queues",
+      "definition": {
+        "dead-letter-exchange": "edumind.dlx",
+        "dead-letter-routing-key": "dead-letter"
+      },
+      "priority": 1
+    },
+    {
+      "vhost": "edumind",
+      "name": "message-ttl",
+      "pattern": ".*",
+      "apply-to": "queues",
+      "definition": {
+        "message-ttl": 86400000
+      },
+      "priority": -1
+    }
+  ],
+  "queues": [
+    {
+      "name": "edumind.events.user",
+      "vhost": "edumind",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "quorum"
+      }
+    },
+    {
+      "name": "edumind.events.prediction",
+      "vhost": "edumind",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "quorum"
+      }
+    },
+    {
+      "name": "edumind.events.engagement",
+      "vhost": "edumind",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "quorum"
+      }
+    },
+    {
+      "name": "edumind.events.learning-style",
+      "vhost": "edumind",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "quorum"
+      }
+    },
+    {
+      "name": "edumind.dlq",
+      "vhost": "edumind",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "quorum"
+      }
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "edumind.events",
+      "vhost": "edumind",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "edumind.commands",
+      "vhost": "edumind",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "edumind.dlx",
+      "vhost": "edumind",
+      "type": "fanout",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "edumind.events",
+      "vhost": "edumind",
+      "destination": "edumind.events.user",
+      "destination_type": "queue",
+      "routing_key": "user.#",
+      "arguments": {}
+    },
+    {
+      "source": "edumind.events",
+      "vhost": "edumind",
+      "destination": "edumind.events.prediction",
+      "destination_type": "queue",
+      "routing_key": "prediction.#",
+      "arguments": {}
+    },
+    {
+      "source": "edumind.events",
+      "vhost": "edumind",
+      "destination": "edumind.events.engagement",
+      "destination_type": "queue",
+      "routing_key": "engagement.#",
+      "arguments": {}
+    },
+    {
+      "source": "edumind.events",
+      "vhost": "edumind",
+      "destination": "edumind.events.learning-style",
+      "destination_type": "queue",
+      "routing_key": "learning-style.#",
+      "arguments": {}
+    },
+    {
+      "source": "edumind.dlx",
+      "vhost": "edumind",
+      "destination": "edumind.dlq",
+      "destination_type": "queue",
+      "routing_key": "",
+      "arguments": {}
+    }
+  ]
+}

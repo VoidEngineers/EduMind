@@ -3,7 +3,7 @@
  * Main container for the personalized action plan with timeline
  */
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActionItem } from './ActionItem';
 import { ActionPlanControls } from './ActionPlanControls';
 import { ActionPlanHeader } from './ActionPlanHeader';
@@ -24,10 +24,13 @@ export function ActionPlanSection({
     onShowCustomize,
     setAriaAnnouncement
 }: ActionPlanSectionProps) {
-    // Calculate derived values
+    // Calculate derived values with useMemo for reactive updates
     const filteredActions = filterActions(actionPlan, searchTerm, filterCategory, filterPriority);
-    const progress = calculateProgress(actionPlan);
-    const completedCount = actionPlan.filter(a => a.isCompleted).length;
+    const progress = calculateProgress(filteredActions); // Use filtered actions for progress
+    const completedCount = useMemo(() =>
+        filteredActions.filter(a => a.isCompleted).length, // Count only visible/filtered actions
+        [filteredActions]
+    );
     const subtitle = getRiskSubtitle(prediction.risk_level);
 
     const [groupBy, setGroupBy] = useState<string>('priority');
@@ -63,7 +66,7 @@ export function ActionPlanSection({
                 subtitle={subtitle}
                 progress={progress}
                 completedCount={completedCount}
-                totalCount={actionPlan.length}
+                totalCount={filteredActions.length}
                 onShowCustomize={onShowCustomize}
             />
 

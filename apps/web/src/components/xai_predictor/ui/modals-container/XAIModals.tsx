@@ -3,17 +3,17 @@
  * Groups all modal components for the XAI Prediction feature
  */
 
-import { useXAI } from '../../core/context/XAIContext';
-import { CustomizeModal } from '../../ui/modal/CustomizeModal';
+import { useXAILogic } from '../../core/hooks/useXAILogic';
 import { ShareModal } from '../../features/share-prediction/ShareModal';
 import { WhatIfModal } from '../../features/what-if-analysis/WhatIfModal';
+import { CustomizeModal } from '../../ui/modal/CustomizeModal';
 
 /**
  * Container component that renders all modals for XAI Prediction
  * Accesses modal and UI state directly from context
  */
 export function XAIModals() {
-    const { modal, ui, prediction, form } = useXAI();
+    const { modal, ui, prediction, form } = useXAILogic();
 
     return (
         <>
@@ -35,15 +35,13 @@ export function XAIModals() {
                 onCopy={ui.copyToClipboard}
             />
 
-            {prediction.prediction && (
-                <WhatIfModal
-                    show={ui.showWhatIfModal}
-                    onClose={ui.closeWhatIfModal}
-                    currentPrediction={prediction.prediction}
-                    formData={form.formData}
-                    onSimulate={ui.simulateScenario}
-                />
-            )}
+            <WhatIfModal
+                show={ui.showWhatIfModal && !!prediction.prediction}
+                onClose={ui.closeWhatIfModal}
+                currentPrediction={prediction.prediction!}
+                formData={form.formData}
+                onSimulate={ui.simulateScenario}
+            />
         </>
     );
 }

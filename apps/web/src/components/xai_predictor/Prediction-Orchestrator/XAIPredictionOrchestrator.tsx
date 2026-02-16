@@ -1,38 +1,61 @@
 /**
  * XAI Prediction Orchestrator
- * Restored to working version with Context API
+ * Refactored to use pure Zustand + Custom Hook (No Context)
+ * UI Components imported directly (no wrappers)
  */
 
-import { useXAI } from '../core/context/XAIContext';
-import { useFormHandlers } from '../core/hooks/useFormHandlers';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 import { useResultsActions } from '../core/hooks/useResultsActions';
-import type { StudentRiskRequest } from '../core/services/xaiService';
-import { FormState, LoadingState, ResultsState } from '../core/state';
+import { useXAILogic } from '../core/hooks/useXAILogic';
+import { StudentRiskRequestSchema, type StudentRiskRequest } from '../core/schemas/xai.schemas';
+import { PredictionForm } from '../features/prediction-form/PredictionForm';
+import { PredictionResults } from '../features/prediction-results/PredictionResults';
 import { ModelDownFallback } from '../ui/fallbacks/ModelDownFallback';
 import { ErrorDisplay, XAILayout } from '../ui/layout/XAILayout';
 import { XAIModals } from '../ui/modals-container/XAIModals';
+import { PredictionResultsSkeleton } from '../ui/skeletons/PredictionResultsSkeleton';
 
 export function XAIPredictionOrchestrator() {
-    // Access all context state
-    const { prediction, modelHealth, toast, form, actionPlan, ui, modal, filter, aria } = useXAI();
+    // Access logic from custom hook (replaces Context)
+    const { prediction, modelHealth, toast, form: storeForm, actionPlan, ui, modal, filter, aria } = useXAILogic();
 
-    // Form handlers hook
-    const { handleInputChange, handleSubmit } = useFormHandlers({
-        setFormData: form.setFormData,
-        predict: () => prediction.predict(form.formData),
-        announceLoading: aria.announceLoading,
-        announceError: aria.announceError
+    // RHF Init
+    const form = useForm<StudentRiskRequest>({
+        resolver: zodResolver(StudentRiskRequestSchema),
+        defaultValues: storeForm.formData, // Init with store values
     });
+
+    const { handleSubmit, reset } = form;
+
+    const onSubmit = async (data: StudentRiskRequest) => {
+        aria.announceLoading();
+        try {
+            storeForm.setFormData(data); // Sync to store
+            await prediction.predict(data);
+        } catch {
+            aria.announceError();
+        }
+    };
 
     // Results actions hook
     const resultsActions = useResultsActions({
         removeAction: actionPlan.removeAction,
         showSuccess: toast.showSuccess,
         showInfo: toast.showInfo,
-        reset: prediction.reset,
+        reset: () => {
+            prediction.reset();
+            reset(storeForm.formData); // Reset RHF to store defaults
+        },
         announceReset: aria.announceReset,
         openWhatIfModal: ui.openWhatIfModal
     });
+
+    // Handle Clear Draft logic (which was passed to FormState)
+    const handleClearDraft = () => {
+        storeForm.clearDraft();
+        reset(storeForm.formData); // RHF reset
+    };
 
     // Model down fallback - early return
     if (!modelHealth.isHealthy && !modelHealth.isModelLoaded) {
@@ -55,16 +78,18 @@ export function XAIPredictionOrchestrator() {
             <ErrorDisplay error={prediction.isError ? prediction.error : null} />
 
             {/* Loading State */}
-            {prediction.isLoading && <LoadingState />}
+            {prediction.isLoading && (
+                <div role="status" aria-label="Loading prediction results">
+                    <PredictionResultsSkeleton />
+                </div>
+            )}
 
             {/* Form State */}
             {!prediction.isLoading && !prediction.prediction && (
-                <FormState
-                    formData={form.formData}
-                    onInputChange={handleInputChange}
-                    onSelectChange={(field, value) => form.setFormData((prev: StudentRiskRequest) => ({ ...prev, [field]: value }))}
-                    onSubmit={handleSubmit}
-                    onClearDraft={form.clearDraft}
+                <PredictionForm
+                    form={form}
+                    onSubmit={handleSubmit(onSubmit)}
+                    onClearDraft={handleClearDraft}
                     isLoading={prediction.isLoading}
                     isHealthy={modelHealth.isHealthy}
                 />
@@ -72,9 +97,9 @@ export function XAIPredictionOrchestrator() {
 
             {/* Results State */}
             {prediction.prediction && !prediction.isLoading && (
-                <ResultsState
+                <PredictionResults
                     prediction={prediction.prediction}
-                    formData={form.formData}
+                    formData={storeForm.formData}
                     actionPlan={actionPlan.actionPlan}
                     theme={ui.theme}
                     searchTerm={filter.searchTerm}

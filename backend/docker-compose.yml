@@ -4,7 +4,9 @@ name: edumind
 
 services:
   user-service:
-    build: ./services/user-service
+    build:
+      context: .
+      dockerfile: services/user-service/Dockerfile
     container_name: edumind-user-service
     ports:
       - "8001:8000"
@@ -17,36 +19,11 @@ services:
       - ./services/user-service/app:/app/app
     restart: unless-stopped
 
-  course-service:
-    build: ./services/course-service
-    container_name: edumind-course-service
-    ports:
-      - "8002:8000"
-    environment:
-      - APP_NAME=EduMind Course Service
-      - PORT=8000
-      - DEBUG=true
-      - ENVIRONMENT=development
-    volumes:
-      - ./services/course-service/app:/app/app
-    restart: unless-stopped
-
-  assessment-service:
-    build: ./services/assessment-service
-    container_name: edumind-assessment-service
-    ports:
-      - "8003:8000"
-    environment:
-      - APP_NAME=EduMind Assessment Service
-      - PORT=8000
-      - DEBUG=true
-      - ENVIRONMENT=development
-    volumes:
-      - ./services/assessment-service/app:/app/app
-    restart: unless-stopped
 
   xai-prediction-service:
-    build: ./services/service-xai-prediction
+    build:
+      context: .
+      dockerfile: services/service-xai-prediction/Dockerfile
     container_name: edumind-xai-prediction
     ports:
       - "8004:8000"
@@ -60,7 +37,9 @@ services:
     restart: unless-stopped
 
   learning-style-service:
-    build: ./services/service-learning-style
+    build:
+      context: .
+      dockerfile: services/service-learning-style/Dockerfile
     container_name: edumind-learning-style
     ports:
       - "8005:8000"
@@ -74,7 +53,9 @@ services:
     restart: unless-stopped
 
   engagement-tracker-service:
-    build: ./services/service-engagement-tracker
+    build:
+      context: .
+      dockerfile: services/service-engagement-tracker/Dockerfile
     container_name: edumind-engagement-tracker
     ports:
       - "8006:8000"
@@ -89,4 +70,5 @@ services:
 
 networks:
   default:
+    external: true
     name: edumind-network

@@ -53,7 +53,9 @@ class AcademicRiskService:
                 self.feature_names = self.metadata.get(
                     "feature_names", self._get_default_features()
                 )
-                accuracy = self.metadata.get("accuracy", 0)
+                accuracy = self.metadata.get("metrics", {}).get("accuracy", 0)
+                if not accuracy:
+                    accuracy = self.metadata.get("accuracy", 0)
                 logger.info(f"✓ Loaded {len(self.feature_names)} features")
                 logger.info(f"✓ Model accuracy: {accuracy*100:.1f}%")
             else:

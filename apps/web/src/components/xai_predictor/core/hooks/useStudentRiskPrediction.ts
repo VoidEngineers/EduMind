@@ -1,3 +1,4 @@
+import { useXAIStore } from '@/store/xai';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { xaiService, type StudentRiskRequest } from '../services/xaiService';
 
@@ -8,16 +9,25 @@ import { xaiService, type StudentRiskRequest } from '../services/xaiService';
 export function useStudentRiskPrediction() {
     const queryClient = useQueryClient();
 
+    const store = useXAIStore();
+
     const mutation = useMutation({
         mutationFn: (studentData: StudentRiskRequest) => xaiService.predictRisk(studentData),
         onSuccess: (data, variables) => {
             // Cache the prediction by student_id
             queryClient.setQueryData(['risk-prediction', variables.student_id], data);
+            // Sync to store
+            store.setCurrentPrediction(data);
         },
         // Retry once on failure
         retry: 1,
         retryDelay: 1000,
     });
+
+    const handleReset = () => {
+        mutation.reset();
+        store.setCurrentPrediction(null);
+    };
 
     return {
         predict: mutation.mutate,
@@ -27,6 +37,6 @@ export function useStudentRiskPrediction() {
         isError: mutation.isError,
         error: mutation.error,
         isSuccess: mutation.isSuccess,
-        reset: mutation.reset,
+        reset: handleReset,
     };
 }

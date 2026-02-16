@@ -32,11 +32,15 @@ services:
       timeout: 5s
       retries: 5
 
+  # NOTE: RabbitMQ has been moved to platform/infrastructure/rabbitmq/ for production cluster setup
+  # For development, run: cd platform/infrastructure/rabbitmq && docker-compose up -d
+  # See platform/infrastructure/rabbitmq/README.md for details
+
   # --- Microservices ---
   user-service:
     build:
-      context: backend/services/user-service
-      dockerfile: Dockerfile
+      context: backend
+      dockerfile: services/user-service/Dockerfile
     ports:
       - "8001:8000"
     environment:
@@ -49,42 +53,10 @@ services:
     networks:
       - edumind-network
 
-  course-service:
-    build:
-      context: backend/services/course-service
-      dockerfile: Dockerfile
-    ports:
-      - "8002:8000"
-    environment:
-      - SERVICE_NAME=course-service
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - edumind-network
-
-  assessment-service:
-    build:
-      context: backend/services/assessment-service
-      dockerfile: Dockerfile
-    ports:
-      - "8003:8000"
-    environment:
-      - SERVICE_NAME=assessment-service
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - edumind-network
-
   service-engagement-tracker:
     build:
-      context: backend/services/service-engagement-tracker
-      dockerfile: Dockerfile
+      context: backend
+      dockerfile: services/service-engagement-tracker/Dockerfile
     ports:
       - "8004:8000"
     environment:
@@ -99,8 +71,8 @@ services:
 
   service-learning-style:
     build:
-      context: backend/services/service-learning-style
-      dockerfile: Dockerfile
+      context: backend
+      dockerfile: services/service-learning-style/Dockerfile
     ports:
       - "8005:8000"
     environment:
@@ -115,8 +87,8 @@ services:
 
   service-xai-prediction:
     build:
-      context: backend/services/service-xai-prediction
-      dockerfile: Dockerfile
+      context: backend
+      dockerfile: services/service-xai-prediction/Dockerfile
     ports:
       - "8006:8000"
     environment:
@@ -128,9 +100,11 @@ services:
         condition: service_healthy
     networks:
       - edumind-network
+
 volumes:
   postgres_data:
 
 networks:
   edumind-network:
+    name: edumind-network
     driver: bridge

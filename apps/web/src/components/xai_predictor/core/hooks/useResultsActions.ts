@@ -45,6 +45,7 @@ export function useResultsActions({
     }, [showInfo]);
 
     const handleWhatIf = useCallback(() => {
+        console.log('[useResultsActions] What-If button clicked');
         openWhatIfModal();
     }, [openWhatIfModal]);
 

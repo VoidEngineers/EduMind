@@ -6,11 +6,11 @@ from app.schemas import (
     PredictionRequest,
     PredictionResponse,
 )
-from app.Services.ml_service import ml_service
+from app.services.ml_service import ml_service
 from fastapi import APIRouter, HTTPException, status
 
 logger = get_logger(__name__)
-router = APIRouter()
+router = APIRouter(tags=["predictions"])
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -37,58 +37,38 @@ async def predict_student_outcome(request: PredictionRequest):
     Returns:
         Prediction result with XAI explanation
     """
-    try:
-        logger.info(f"Prediction request for student: {request.student_id}")
+    logger.info(f"Prediction request for student: {request.student_id}")
 
-        # Make prediction
-        prediction, explanation = await ml_service.predict(request)
+    # Make prediction
+    prediction, explanation = await ml_service.predict(request)
 
-        # Generate recommendations
-        recommendations = ml_service._generate_recommendations(
-            request, prediction.risk_level
-        )
+    # Generate recommendations
+    recommendations = ml_service._generate_recommendations(
+        request, prediction.risk_level
+    )
 
-        # Return response
-        response = PredictionResponse(
-            prediction=prediction,
-            explanation=explanation,
-            recommendations=recommendations,
-        )
+    # Return response
+    response = PredictionResponse(
+        prediction=prediction,
+        explanation=explanation,
+        recommendations=recommendations,
+    )
 
-        logger.info(
-            f"Prediction complete: {prediction.predicted_class} "
-            f"(probability: {prediction.probability:.2%}, risk: {prediction.risk_level})"
-        )
+    logger.info(
+        f"Prediction complete: {prediction.predicted_class} "
+        f"(probability: {prediction.probability:.2%}, risk: {prediction.risk_level})"
+    )
 
-        return response
-
-    except ValueError as e:
-        logger.error(f"Validation error: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid request: {str(e)}"
-        )
-    except Exception as e:
-        logger.error(f"Prediction failed: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Prediction failed: {str(e)}",
-        )
+    return response
 
 
 @router.get("/model/info", response_model=ModelInfoResponse)
 async def get_model_info():
     """Get information about the loaded ML model"""
-    try:
-        return ModelInfoResponse(
-            model_type="XGBoost Classifier with SHAP Explanations",
-            features_count=len(ml_service.feature_names),
-            feature_names=ml_service.feature_names,
-            classes=ml_service.label_encoder.classes_.tolist(),
-            metadata=ml_service.metadata,
-        )
-    except Exception as e:
-        logger.error(f"Failed to retrieve model info: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Could not retrieve model info: {str(e)}",
-        )
+    return ModelInfoResponse(
+        model_type="XGBoost Classifier with SHAP Explanations",
+        features_count=len(ml_service.feature_names),
+        feature_names=ml_service.feature_names,
+        classes=ml_service.label_encoder.classes_.tolist(),
+        metadata=ml_service.metadata,
+    )

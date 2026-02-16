@@ -2,19 +2,33 @@
 Prediction Schemas for XAI Prediction Service
 """
 from enum import Enum
-from typing import  Dict, List, Optional
+from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class RiskLevel(str, Enum):
-        LOW = "low"
-        MEDIUM = "medium"
-        HIGH = "high"
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
 
 
 class PredictionRequest(BaseModel):
     """Request schema for student outcome prediction"""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "student_id": "student_12345",
+                "total_interactions": 150,
+                "avg_response_time": 45.5,
+                "consistency_score": 0.75,
+                "days_inactive": 3,
+                "completion_rate": 0.65,
+                "assessment_score": 72.5,
+            }
+        }
+    )
 
     student_id: str = Field(..., description="Unique student identifier")
 
@@ -37,20 +51,6 @@ class PredictionRequest(BaseModel):
     assessment_score: float = Field(
         default=50.0, ge=0, le=100, description="Average assessment score"
     )
-
-    model_config = {
-        "json_schema_extra": {
-            "example": {
-                "student_id": "student_12345",
-                "total_interactions": 150,
-                "avg_response_time": 45.5,
-                "consistency_score": 0.75,
-                "days_inactive": 3,
-                "completion_rate": 0.65,
-                "assessment_score": 72.5,
-            }
-        }
-    }
 
 
 class PredictionResult(BaseModel):
@@ -82,12 +82,8 @@ class ExplanationResult(BaseModel):
 class PredictionResponse(BaseModel):
     """Response schema for prediction"""
 
-    prediction: PredictionResult
-    explanation: ExplanationResult
-    recommendations: List[str] = Field(default_factory=list)
-
-    model_config = {
-        "json_schema_extra": {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "prediction": {
                     "predicted_class": "at_risk",
@@ -118,4 +114,8 @@ class PredictionResponse(BaseModel):
                 ],
             }
         }
-    }
+    )
+
+    prediction: PredictionResult
+    explanation: ExplanationResult
+    recommendations: List[str] = Field(default_factory=list)

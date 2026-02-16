@@ -1,25 +1,13 @@
-import os
+from backend.shared.config import BaseServiceSettings
 from pathlib import Path
 from typing import Optional
+import os
 
-from pydantic_settings import BaseSettings
-
-
-class Settings(BaseSettings):
-    # Service Configuration
+class Settings(BaseServiceSettings):
+    # Service Overrides
     SERVICE_NAME: str = "XAI Prediction Service"
-    VERSION: str = "1.0.0"
-    API_PREFIX: str = "/api/v1"
-
-    # Server Configuration
-    HOST: str = "0.0.0.0"
-    PORT: int = 8000
-
-    # Environment
-    ENVIRONMENT: str = "development"
-    DEBUG: bool = True
-
-    # Base Directory
+    
+    # Custom ML Paths
     @property
     def BASE_DIR(self) -> Path:
         return Path(__file__).parent.parent.parent
@@ -72,26 +60,8 @@ class Settings(BaseSettings):
     def METADATA_PATH(self) -> Path:
         return self.ML_MODELS_DIR / "model_metadata_best.joblib"
 
-    # CORS
-    ALLOWED_ORIGINS: list = [
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:5175",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:5174",
-        "http://127.0.0.1:5175",
-        "https://edumind.vercel.app",
-    ]
-
-    # Logging
-    LOG_LEVEL: str = "INFO"
-
-    # Database (if needed for storing predictions)
+    # Database & Redis
     DATABASE_URL: Optional[str] = None
-
-    # Redis (for caching)
     REDIS_URL: Optional[str] = None
 
     class Config:

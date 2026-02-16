@@ -23,9 +23,6 @@ import pandas as pd
 import numpy as np
 from sqlalchemy.orm import Session
 
-# Add ml directory to path
-sys.path.append(str(Path(__file__).parent.parent.parent))
-
 from ml.feature_engineering import LearningStyleFeatureEngineer
 from app.models.learning_style import StudentLearningProfile, StudentBehaviorTracking
 

@@ -1,7 +1,8 @@
+import { useXAIStore } from '@/store/xai';
 import { useState } from 'react';
+import { exportPredictionToPDF } from '../../utils/exportPDF';
 import type { RiskPredictionResponse, StudentRiskRequest } from '../services/xaiService';
 import { xaiService } from '../services/xaiService';
-import { exportPredictionToPDF } from '../../utils/exportPDF';
 
 /**
  * Hook to manage all UI actions (export, share, theme, etc.)
@@ -14,10 +15,11 @@ export function useUIActions(
     showError: (msg: string) => void,
     showInfo: (msg: string) => void
 ) {
+    const store = useXAIStore();
     const [theme, setTheme] = useState<'dark' | 'light'>('light');
     const [shareLink, setShareLink] = useState('');
     const [showShareModal, setShowShareModal] = useState(false);
-    const [showWhatIfModal, setShowWhatIfModal] = useState(false);
+
 
     const toggleTheme = () => {
         const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -58,8 +60,16 @@ export function useUIActions(
 
     const closeShareModal = () => setShowShareModal(false);
 
-    const openWhatIfModal = () => setShowWhatIfModal(true);
-    const closeWhatIfModal = () => setShowWhatIfModal(false);
+    const openWhatIfModal = () => {
+        console.log('[useUIActions] Opening What-If modal, current state:', store.isWhatIfModalOpen);
+        store.setWhatIfModalOpen(true);
+        console.log('[useUIActions] After setting, state:', store.isWhatIfModalOpen);
+    };
+
+    const closeWhatIfModal = () => {
+        console.log('[useUIActions] Closing What-If modal');
+        store.setWhatIfModalOpen(false);
+    };
 
     const simulateScenario = async (scenarioData: StudentRiskRequest): Promise<RiskPredictionResponse> => {
         try {
@@ -76,7 +86,7 @@ export function useUIActions(
         theme,
         shareLink,
         showShareModal,
-        showWhatIfModal,
+        showWhatIfModal: store.isWhatIfModalOpen || false,
         toggleTheme,
         handleExportPDF,
         handleShare,

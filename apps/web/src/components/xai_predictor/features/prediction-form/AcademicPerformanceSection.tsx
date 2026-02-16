@@ -1,13 +1,13 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Activity, ArrowUp, CheckCircle, TrendingDown } from 'lucide-react';
-import type { AcademicPerformanceSectionProps } from './types';
+import { useFormContext } from 'react-hook-form';
+import type { StudentRiskRequest } from '../../core/schemas/xai.schemas';
 
-export function AcademicPerformanceSection({ formData, onInputChange }: AcademicPerformanceSectionProps) {
+export function AcademicPerformanceSection() {
+    const { register, formState: { errors } } = useFormContext<StudentRiskRequest>();
     return (
         <div className="space-y-4">
-
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <Label htmlFor="avg_grade" className="flex items-center gap-2 font-semibold">
@@ -18,24 +18,18 @@ export function AcademicPerformanceSection({ formData, onInputChange }: Academic
                         <Input
                             id="avg_grade"
                             type="number"
-                            name="avg_grade"
-                            value={formData.avg_grade}
-                            onChange={onInputChange}
+                            {...register('avg_grade', { valueAsNumber: true })}
                             min="0"
                             max="100"
                             step="0.1"
-                            required
                             placeholder="0-100"
-                            aria-describedby="avg_grade_hint"
                             className="bg-background border-input focus:border-primary focus:ring-1 focus:ring-primary pr-12"
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-600 font-semibold pointer-events-none">
                             %
                         </span>
                     </div>
-                    <span id="avg_grade_hint" className="block text-sm text-muted-foreground italic">
-                        Current: {formData.avg_grade}%
-                    </span>
+                    {errors.avg_grade && <p className="text-sm text-destructive">{errors.avg_grade.message}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -47,24 +41,18 @@ export function AcademicPerformanceSection({ formData, onInputChange }: Academic
                         <Input
                             id="grade_consistency"
                             type="number"
-                            name="grade_consistency"
-                            value={formData.grade_consistency}
-                            onChange={onInputChange}
+                            {...register('grade_consistency', { valueAsNumber: true })}
                             min="0"
                             max="100"
                             step="0.1"
-                            required
                             placeholder="0-100"
-                            aria-describedby="grade_consistency_hint"
                             className="bg-background border-input focus:border-primary focus:ring-1 focus:ring-primary pr-12"
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-600 font-semibold pointer-events-none">
                             %
                         </span>
                     </div>
-                    <span id="grade_consistency_hint" className="block text-sm text-muted-foreground italic">
-                        Performance stability score
-                    </span>
+                    {errors.grade_consistency && <p className="text-sm text-destructive">{errors.grade_consistency.message}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -76,24 +64,18 @@ export function AcademicPerformanceSection({ formData, onInputChange }: Academic
                         <Input
                             id="grade_range"
                             type="number"
-                            name="grade_range"
-                            value={formData.grade_range}
-                            onChange={onInputChange}
+                            {...register('grade_range', { valueAsNumber: true })}
                             min="0"
                             max="100"
                             step="0.1"
-                            required
                             placeholder="0-100"
-                            aria-describedby="grade_range_hint"
                             className="bg-background border-input focus:border-primary focus:ring-1 focus:ring-primary pr-12"
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-600 font-semibold pointer-events-none">
                             pts
                         </span>
                     </div>
-                    <span id="grade_range_hint" className="block text-sm text-muted-foreground italic">
-                        Highest - Lowest grade
-                    </span>
+                    {errors.grade_range && <p className="text-sm text-destructive">{errors.grade_range.message}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -104,19 +86,12 @@ export function AcademicPerformanceSection({ formData, onInputChange }: Academic
                     <Input
                         id="num_assessments"
                         type="number"
-                        name="num_assessments"
-                        value={formData.num_assessments}
-                        onChange={onInputChange}
+                        {...register('num_assessments', { valueAsNumber: true })}
                         min="0"
-                        required
                         placeholder="Total assessments"
-                        aria-describedby="num_assessments_hint"
-
                         className="bg-background border-input focus:border-primary focus:ring-1 focus:ring-primary"
                     />
-                    <span id="num_assessments_hint" className="block text-sm text-muted-foreground italic">
-                        Completed assessments
-                    </span>
+                    {errors.num_assessments && <p className="text-sm text-destructive">{errors.num_assessments.message}</p>}
                 </div>
             </div>
         </div>
