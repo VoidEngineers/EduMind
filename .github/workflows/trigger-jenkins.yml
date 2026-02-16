@@ -8,7 +8,7 @@ on:
     workflow_dispatch:
         inputs:
             services:
-                description: "Comma-separated services to deploy (e.g., user-service,course-service)"
+                description: "Comma-separated services to deploy (e.g., user-service,service-xai-prediction)"
                 required: false
 
 jobs:
@@ -34,10 +34,6 @@ jobs:
                   filters: |
                       user-service:
                         - 'backend/services/user-service/**'
-                      course-service:
-                        - 'backend/services/course-service/**'
-                      assessment-service:
-                        - 'backend/services/assessment-service/**'
                       service-xai-prediction:
                         - 'backend/services/service-xai-prediction/**'
                       service-learning-style:
@@ -57,12 +53,6 @@ jobs:
                     
                     if [ "${{ steps.filter.outputs.user-service }}" = "true" ]; then
                       SERVICES="user-service"
-                    fi
-                    if [ "${{ steps.filter.outputs.course-service }}" = "true" ]; then
-                      SERVICES="${SERVICES:+$SERVICES,}course-service"
-                    fi
-                    if [ "${{ steps.filter.outputs.assessment-service }}" = "true" ]; then
-                      SERVICES="${SERVICES:+$SERVICES,}assessment-service"
                     fi
                     if [ "${{ steps.filter.outputs.service-xai-prediction }}" = "true" ]; then
                       SERVICES="${SERVICES:+$SERVICES,}service-xai-prediction"

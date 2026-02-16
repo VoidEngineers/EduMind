@@ -1,0 +1,183 @@
+# ===========================================
+# EduMind RabbitMQ Cluster
+# Production-Ready Configuration
+# ===========================================
+#
+# This configuration follows industry best practices:
+# - Secure credentials (change in production!)
+# - Virtual host isolation
+# - Per-service user accounts with limited permissions
+# - Quorum queues for durability
+# - Dead letter exchanges for failed message handling
+# - Prometheus metrics for monitoring
+# - Resource limits and health checks
+# - Data persistence
+#
+# Usage:
+#   Development: docker-compose up -d
+#   Production:  docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# ===========================================
+
+version: '3.8'
+
+services:
+  # ===========================================
+  # RabbitMQ Node 1 (Primary)
+  # ===========================================
+  rabbitmq-node1:
+    image: rabbitmq:3.12-management-alpine
+    hostname: rabbitmq-node1
+    container_name: edumind-rabbitmq-node1
+    ports:
+      - "5672:5672"      # AMQP
+      - "15672:15672"    # Management UI
+      - "15692:15692"    # Prometheus metrics
+    environment:
+      # Cluster Configuration
+      RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE:-edumind_secret_cookie_change_in_production}
+      RABBITMQ_NODENAME: rabbit@rabbitmq-node1
+      
+      # Admin User (change these in production!)
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_ADMIN_USER:-edumind_admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_ADMIN_PASS:-EduM1nd_Adm!n_2024}
+      RABBITMQ_DEFAULT_VHOST: edumind
+      
+      # Enable plugins
+      RABBITMQ_PLUGINS: rabbitmq_management,rabbitmq_prometheus,rabbitmq_shovel,rabbitmq_shovel_management
+    volumes:
+      - rabbitmq_node1_data:/var/lib/rabbitmq
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./definitions.json:/etc/rabbitmq/definitions.json:ro
+      - ./enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
+    networks:
+      - edumind-rabbitmq-cluster
+      - edumind-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+    restart: unless-stopped
+    labels:
+      - "com.edumind.service=rabbitmq"
+      - "com.edumind.component=messaging"
+      - "com.edumind.environment=development"
+
+  # ===========================================
+  # RabbitMQ Node 2 (Replica)
+  # ===========================================
+  rabbitmq-node2:
+    image: rabbitmq:3.12-management-alpine
+    hostname: rabbitmq-node2
+    container_name: edumind-rabbitmq-node2
+    ports:
+      - "5673:5672"      # AMQP (different host port)
+      - "15673:15672"    # Management UI
+    environment:
+      RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE:-edumind_secret_cookie_change_in_production}
+      RABBITMQ_NODENAME: rabbit@rabbitmq-node2
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_ADMIN_USER:-edumind_admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_ADMIN_PASS:-EduM1nd_Adm!n_2024}
+      RABBITMQ_DEFAULT_VHOST: edumind
+    volumes:
+      - rabbitmq_node2_data:/var/lib/rabbitmq
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
+    networks:
+      - edumind-rabbitmq-cluster
+      - edumind-network
+    depends_on:
+      rabbitmq-node1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+    restart: unless-stopped
+    labels:
+      - "com.edumind.service=rabbitmq"
+      - "com.edumind.component=messaging"
+      - "com.edumind.role=replica"
+
+  # ===========================================
+  # RabbitMQ Node 3 (Replica)
+  # ===========================================
+  rabbitmq-node3:
+    image: rabbitmq:3.12-management-alpine
+    hostname: rabbitmq-node3
+    container_name: edumind-rabbitmq-node3
+    ports:
+      - "5674:5672"      # AMQP (different host port)
+      - "15674:15672"    # Management UI
+    environment:
+      RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE:-edumind_secret_cookie_change_in_production}
+      RABBITMQ_NODENAME: rabbit@rabbitmq-node3
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_ADMIN_USER:-edumind_admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_ADMIN_PASS:-EduM1nd_Adm!n_2024}
+      RABBITMQ_DEFAULT_VHOST: edumind
+    volumes:
+      - rabbitmq_node3_data:/var/lib/rabbitmq
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
+    networks:
+      - edumind-rabbitmq-cluster
+      - edumind-network
+    depends_on:
+      rabbitmq-node1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+    restart: unless-stopped
+    labels:
+      - "com.edumind.service=rabbitmq"
+      - "com.edumind.component=messaging"
+      - "com.edumind.role=replica"
+
+volumes:
+  rabbitmq_node1_data:
+    name: edumind-rabbitmq-node1-data
+  rabbitmq_node2_data:
+    name: edumind-rabbitmq-node2-data
+  rabbitmq_node3_data:
+    name: edumind-rabbitmq-node3-data
+
+networks:
+  edumind-rabbitmq-cluster:
+    name: edumind-rabbitmq-cluster
+    driver: bridge
+    internal: true  # Cluster traffic is internal only
+  edumind-network:
+    name: edumind-network
+    external: true  # Connect to existing EduMind network
