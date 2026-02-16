@@ -23,6 +23,7 @@ plotly>=5.18.0
 
 # Utilities
 faker>=22.0.0  # For synthetic data generation
+aio-pika==9.4.0
 
 # Security
 python-multipart==0.0.20

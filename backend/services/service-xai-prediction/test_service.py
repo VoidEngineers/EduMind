@@ -24,7 +24,7 @@ except Exception as e:
 print("\n[2/4] Loading academic risk service...")
 start = time.time()
 try:
-    from app.Services.academic_risk_service import academic_risk_service
+    from app.services.academic_risk_service import academic_risk_service
 
     print(f"   ✓ Service loaded ({time.time()-start:.2f}s)")
 except Exception as e:

@@ -44,23 +44,21 @@ class MLService:
                 return
 
             # Try to load model
-            model_path = base_path / "xai_model.joblib"
+            model_path = base_path / "academic_risk_model.json"
             if model_path.exists():
+                import xgboost as xgb
+
+                self.model = xgb.XGBClassifier()
+                self.model.load_model(str(model_path))
+                logger.info("✓ XGBoost model loaded successfully")
+            elif (base_path / "xai_model.joblib").exists():
+                model_path = base_path / "xai_model.joblib"
                 self.model = joblib.load(model_path)
                 logger.info("✓ Model loaded successfully")
             else:
-                # Try alternative path
-                model_path = base_path / "academic_risk_model.json"
-                if model_path.exists():
-                    import xgboost as xgb
-
-                    self.model = xgb.XGBClassifier()
-                    self.model.load_model(str(model_path))
-                    logger.info("✓ XGBoost model loaded successfully")
-                else:
-                    logger.warning("No model file found, running in demo mode")
-                    self._setup_demo_mode()
-                    return
+                logger.warning("No model file found, running in demo mode")
+                self._setup_demo_mode()
+                return
 
             # Load metadata if exists
             metadata_path = base_path / "model_metadata.json"

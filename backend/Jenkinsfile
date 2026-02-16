@@ -64,7 +64,7 @@ pipeline {
                     
                     // Parse services to deploy
                     env.SERVICES_TO_DEPLOY = params.CHANGED_SERVICES ?: 
-                        'user-service,course-service,assessment-service,service-xai-prediction,service-learning-style,service-engagement-tracker'
+                        'user-service,service-xai-prediction,service-learning-style,service-engagement-tracker'
                 }
             }
         }

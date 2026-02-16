@@ -1,26 +1,28 @@
 """
 Configuration settings for Engagement Tracker Service
 """
-from pydantic_settings import BaseSettings
+from backend.shared.config import BaseServiceSettings
 from typing import Optional
 
-
-class Settings(BaseSettings):
+class Settings(BaseServiceSettings):
     """Application settings loaded from environment variables"""
     
     # Service identification
     SERVICE_NAME: str = "engagement-tracker-service"
-    VERSION: str = "1.0.0"
     DESCRIPTION: str = "Tracks student engagement and provides intervention recommendations"
     
     # Database (using psycopg3 driver)
     DATABASE_URL: str = "postgresql+psycopg://postgres:admin@localhost:5432/edumind"
     
     # API Configuration
-    API_V1_PREFIX: str = "/api/v1"
+    @property
+    def API_V1_PREFIX(self) -> str:
+        return self.API_PREFIX
     
     # CORS
-    CORS_ORIGINS: list = ["*"]
+    @property
+    def CORS_ORIGINS(self) -> list:
+        return self.ALLOWED_ORIGINS
     
     # Engagement Scoring Weights
     WEIGHT_LOGIN_FREQUENCY: float = 0.25

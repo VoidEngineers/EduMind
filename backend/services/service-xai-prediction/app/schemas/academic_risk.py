@@ -6,11 +6,29 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class AcademicRiskRequest(BaseModel):
     """Request schema for academic risk prediction"""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "student_id": "student_12345",
+                "avg_grade": 65.5,
+                "grade_consistency": 85.2,
+                "grade_range": 30.0,
+                "num_assessments": 8,
+                "assessment_completion_rate": 0.8,
+                "studied_credits": 60,
+                "num_of_prev_attempts": 0,
+                "low_performance": 0,
+                "low_engagement": 0,
+                "has_previous_attempts": 0,
+            }
+        }
+    )
 
     student_id: str
     avg_grade: float = Field(
@@ -40,44 +58,12 @@ class AcademicRiskRequest(BaseModel):
         ..., ge=0, le=1, description="Binary: has failed before"
     )
 
-    model_config = {
-        "json_schema_extra": {
-            "example": {
-                "student_id": "student_12345",
-                "avg_grade": 65.5,
-                "grade_consistency": 85.2,
-                "grade_range": 30.0,
-                "num_assessments": 8,
-                "assessment_completion_rate": 0.8,
-                "studied_credits": 60,
-                "num_of_prev_attempts": 0,
-                "low_performance": 0,
-                "low_engagement": 0,
-                "has_previous_attempts": 0,
-            }
-        }
-    }
-
 
 class AcademicRiskResponse(BaseModel):
     """Response schema for academic risk prediction"""
 
-    student_id: str
-    risk_level: str = Field(..., description="Safe or At-Risk")
-    risk_score: float = Field(
-        ..., ge=0, le=1, description="Probability of being at-risk"
-    )
-    confidence: float = Field(..., ge=0, le=1, description="Prediction confidence")
-    probabilities: dict = Field(..., description="Probabilities for each class")
-    recommendations: List[str] = Field(..., description="Personalized recommendations")
-    top_risk_factors: List[dict] = Field(
-        ..., description="Top factors contributing to risk"
-    )
-    prediction_id: UUID = Field(default_factory=uuid4)
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
-
-    model_config = {
-        "json_schema_extra": {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "student_id": "student_12345",
                 "risk_level": "At-Risk",
@@ -97,4 +83,18 @@ class AcademicRiskResponse(BaseModel):
                 "timestamp": "2024-01-15T10:30:00",
             }
         }
-    }
+    )
+
+    student_id: str
+    risk_level: str = Field(..., description="Safe or At-Risk")
+    risk_score: float = Field(
+        ..., ge=0, le=1, description="Probability of being at-risk"
+    )
+    confidence: float = Field(..., ge=0, le=1, description="Prediction confidence")
+    probabilities: dict = Field(..., description="Probabilities for each class")
+    recommendations: List[str] = Field(..., description="Personalized recommendations")
+    top_risk_factors: List[dict] = Field(
+        ..., description="Top factors contributing to risk"
+    )
+    prediction_id: UUID = Field(default_factory=uuid4)
+    timestamp: datetime = Field(default_factory=datetime.utcnow)

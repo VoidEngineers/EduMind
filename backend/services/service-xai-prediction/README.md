@@ -108,6 +108,28 @@ docker run -p 8000:8000 \
 - Request Body: `PredictionRequest` (student_id, features dictionary)
 - Response: `PredictionResponse` (prediction result with explanation)
 
+#### POST /api/v1/academic-risk/predict
+
+- Predict student dropout risk using OULAD model
+- Request Body: `AcademicRiskRequest` (academic performance features)
+- Response: `AcademicRiskResponse` (risk assessment with personalized recommendations)
+
+#### GET /api/v1/academic-risk/model-info
+
+- Get information about the OULAD academic risk model
+- Response: Model type, features, classes, accuracy
+
+## Architecture & Best Practices
+
+This service follows industry-standard best practices for production-grade FastAPI applications:
+
+- **Correlation IDs**: Every request is assigned a unique `X-Request-ID` (Correlation ID) via middleware. This ID is included in all logs and returned in the response headers to facilitate cross-service tracing and debugging.
+- **Global Error Handling**: Centralized exception management in `app/core/middleware.py` ensures consistent error responses and prevents sensitive leakages.
+- **Structured Logging**: Unified logging interface with request/response logging including timing and request IDs.
+- **Pydantic V2**: Modern data validation using Pydantic V2 `ConfigDict` and `Field`.
+- **Clean API Design**: Modular routing with shared middleware and centralized schemas.
+- **Dependency Management**: Clear separation of concerns between API routes, business logic (services), and core configuration.
+
 ## API Usage Examples
 
 ### Health Check

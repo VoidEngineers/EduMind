@@ -1,21 +1,19 @@
+from backend.shared.config import BaseServiceSettings
 from typing import Optional
 
-from pydantic_settings import BaseSettings
-
-
-class Settings(BaseSettings):
+class Settings(BaseServiceSettings):
     """User Service Settings"""
-
     SERVICE_NAME: str = "user-service"
-    API_V1_STR: str = "/api/v1"
-    ENVIRONMENT: str = "development"
-    DEBUG: bool = False
-    LOG_LEVEL: str = "INFO"
+    
+    # Backward compatibility
+    @property
+    def API_V1_STR(self) -> str:
+        return self.API_PREFIX
 
-    # Database (optional for now)
+    # Database
     DATABASE_URL: Optional[str] = None
 
-    # Security (optional for now)
+    # Security
     SECRET_KEY: str = "dev-secret-key"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 

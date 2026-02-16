@@ -3,11 +3,37 @@ EduMind Engagement Tracking Service - FastAPI Application
 
 Complete API for student engagement tracking and disengagement prediction
 """
+import os
+import sys
+from pathlib import Path
+
+# Add the project root to sys.path for shared module imports
+script_dir = Path(__file__).resolve().parent
+project_root = script_dir.parent.parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+# Also add the service directory to path for local imports
+service_dir = script_dir.parent
+if str(service_dir) not in sys.path:
+    sys.path.insert(0, str(service_dir))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+
+from app.core.config import settings
+from app.core.logging import setup_logging, get_logger
+from backend.shared.middleware import (
+    error_handler_middleware,
+    logging_middleware,
+    validation_exception_handler,
+    http_exception_handler,
+)
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 # Import routers
 from app.api import routes_system
@@ -17,32 +43,17 @@ from app.api import routes_students
 from app.api import routes_events
 from app.api import routes_scheduling
 
+from backend.shared.messaging import get_broker
+
+# Setup logging
+setup_logging()
+logger = get_logger(__name__)
+
 # Create FastAPI app
 app = FastAPI(
-    title="EduMind Engagement Tracking Service",
-    version="1.0.0",
-    description="""
-    ## 🎓 EduMind Engagement Tracking API
-    
-    Track student engagement, predict disengagement risk, and trigger interventions.
-    
-    ### Features
-    - 📊 Real-time engagement scoring
-    - 🎯 ML-powered disengagement prediction (99.94% accuracy)
-    - 📈 Student analytics and dashboards
-    - 🚨 At-risk student identification
-    - 📥 Event ingestion from Moodle/LMS
-    
-    ### Key Endpoints
-    - **Engagement**: `/api/v1/engagement` - Get engagement scores
-    - **Predictions**: `/api/v1/predictions` - Get risk predictions
-    - **Students**: `/api/v1/students` - Student analytics
-    - **Events**: `/api/v1/events` - Ingest activity events
-    
-    ### ML Models
-    - **Engagement Scoring**: Weighted composite (5 components)
-    - **Disengagement Prediction**: Gradient Boosting (99.94% accuracy, 0.9991 ROC-AUC)
-    """,
+    title=settings.SERVICE_NAME,
+    version=settings.VERSION,
+    description=settings.DESCRIPTION,
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
@@ -55,14 +66,22 @@ app = FastAPI(
     }
 )
 
-# CORS middleware
+# Standard middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify allowed origins
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Shared middleware
+app.middleware("http")(logging_middleware)
+app.middleware("http")(error_handler_middleware)
+
+# Shared exception handlers
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 
 # Include routers
 app.include_router(routes_system.router)
@@ -71,6 +90,34 @@ app.include_router(routes_predictions.router)
 app.include_router(routes_students.router)
 app.include_router(routes_events.router)
 app.include_router(routes_scheduling.router)
+
+
+# Global health check for infrastructure (without prefix)
+@app.get("/health", tags=["System"])
+async def global_health_check():
+    """Health check for infrastructure monitoring"""
+    from backend.shared.messaging import get_broker
+    
+    health = {
+        "status": "healthy",
+        "service": settings.SERVICE_NAME,
+        "components": {}
+    }
+    
+    # Check RabbitMQ
+    try:
+        broker = get_broker(settings.RABBITMQ_URL)
+        if broker.connection and not broker.connection.is_closed:
+            health["components"]["rabbitmq"] = "connected"
+        else:
+            health["components"]["rabbitmq"] = "disconnected"
+            health["status"] = "degraded"
+    except Exception:
+        health["components"]["rabbitmq"] = "error"
+        health["status"] = "degraded"
+        
+    return health
+
 
 # Favicon endpoint to prevent 404 errors (must be before static files)
 @app.get("/favicon.ico", include_in_schema=False)
@@ -113,6 +160,15 @@ async def redirect_to_app():
 async def startup_event():
     """Runs when the application starts"""
     print("EduMind Engagement Tracking Service starting...")
+    
+    # Connect to RabbitMQ
+    broker = get_broker(settings.RABBITMQ_URL)
+    try:
+        await broker.connect(client_name=settings.SERVICE_NAME)
+        print(f"Connected to RabbitMQ as {settings.SERVICE_NAME}")
+    except Exception as e:
+        print(f"Could not connect to RabbitMQ: {e}")
+        
     print("API Documentation: http://localhost:8002/api/docs")
     print("Service ready!")
 
@@ -122,3 +178,7 @@ async def startup_event():
 async def shutdown_event():
     """Runs when the application shuts down"""
     print("EduMind Engagement Tracking Service shutting down...")
+    
+    # Close RabbitMQ connection
+    broker = get_broker(settings.RABBITMQ_URL)
+    await broker.close()

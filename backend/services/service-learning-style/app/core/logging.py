@@ -6,10 +6,10 @@ import logging
 def setup_logging() -> None:
     """Configure application logging using shared utility"""
     shared_setup_logging(
-        service_name="xai-prediction",
+        service_name="learning-style",
         log_level=settings.LOG_LEVEL
     )
 
 def get_logger(name: str) -> logging.Logger:
     """Get a logger instance using shared utility"""
-    return shared_get_logger("xai-prediction", name)
+    return shared_get_logger("learning-style", name)
