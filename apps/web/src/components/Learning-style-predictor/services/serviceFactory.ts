@@ -3,7 +3,7 @@
  * Creates service instances with different configurations
  */
 
-import type { ILearningStyleService } from '../data/interfaces';
+import type { ILearningStyleDashboardService } from '../data/interfaces';
 import { learningStyleService } from './learningStyleService';
 
 export type ServiceEnvironment = 'production' | 'development' | 'test';
@@ -17,7 +17,7 @@ export interface ServiceConfig {
 /**
  * Create a learning style service instance
  */
-export function createLearningStyleService(config: ServiceConfig): ILearningStyleService {
+export function createLearningStyleService(config: ServiceConfig): ILearningStyleDashboardService {
     const { environment, mockDelay = 1500, enableLogging = false } = config;
 
     if (environment === 'test') {
@@ -35,7 +35,7 @@ export function createLearningStyleService(config: ServiceConfig): ILearningStyl
 /**
  * Create a mock service with configurable delay
  */
-function createMockService(delay: number): ILearningStyleService {
+function createMockService(delay: number): ILearningStyleDashboardService {
     return {
         async predictLearningStyle(data) {
             await new Promise(resolve => setTimeout(resolve, delay));
@@ -61,13 +61,45 @@ function createMockService(delay: number): ILearningStyleService {
         async checkHealth() {
             return { status: 'healthy', message: 'Mock service operational' };
         },
+        async listStudentIds() {
+            return ['STU0001', 'STU0002', 'STU0003', 'STU0004'];
+        },
+        async getStudentProfile(studentId: string) {
+            return {
+                studentId,
+                completionRate: 78,
+                daysTracked: 14,
+                preferredDifficulty: 'Standard' as const,
+            };
+        },
+        async getSystemStats() {
+            return {
+                totalStudents: 16,
+                totalResources: 42,
+                totalRecommendations: 128,
+                recommendationCompletionRate: 82,
+                learningStyleDistribution: {
+                    visual: 5,
+                    auditory: 3,
+                    reading: 4,
+                    kinesthetic: 4,
+                },
+                topStruggleTopics: [
+                    { label: 'Linear Algebra', count: 11 },
+                    { label: 'Python Loops', count: 9 },
+                    { label: 'Data Structures', count: 8 },
+                    { label: 'Probability Basics', count: 7 },
+                    { label: 'Database Joins', count: 6 },
+                ],
+            };
+        },
     };
 }
 
 /**
  * Create a service wrapper with logging
  */
-function createLoggingService(service: ILearningStyleService): ILearningStyleService {
+function createLoggingService(service: ILearningStyleDashboardService): ILearningStyleDashboardService {
     return {
         async predictLearningStyle(data) {
             console.log('[LearningStyleService] Predicting for:', data.student_id);
@@ -86,6 +118,18 @@ function createLoggingService(service: ILearningStyleService): ILearningStyleSer
         async checkHealth() {
             console.log('[LearningStyleService] Health check');
             return service.checkHealth();
+        },
+        async listStudentIds(limit) {
+            console.log('[LearningStyleService] Fetching student IDs');
+            return service.listStudentIds(limit);
+        },
+        async getStudentProfile(studentId) {
+            console.log('[LearningStyleService] Fetching student profile:', studentId);
+            return service.getStudentProfile(studentId);
+        },
+        async getSystemStats() {
+            console.log('[LearningStyleService] Fetching system stats');
+            return service.getSystemStats();
         },
     };
 }

@@ -1,56 +1,82 @@
 /**
  * Learning Style Predictor Component
- * Main entry point - orchestrates form and results
- * Enhanced with error boundary and service factory
+ * Composes workflow sections and delegates orchestration to a dedicated hook.
  */
 
 import { PredictorErrorBoundary } from '@/components/common/PredictorErrorBoundary';
-import { useLearningStyleLogic } from './core/hooks/useLearningStyleLogic';
-import { useLearningStyleState } from './core/hooks/useLearningStyleState';
-import { LearningStyleForm } from './features/prediction-form/LearningStyleForm';
-import { LearningStyleResultsView } from './features/prediction-results/LearningStyleResultsView';
 import { defaultLearningStyleService } from './services/serviceFactory';
+import type { ILearningStyleDashboardService } from './data/interfaces';
+import { useLearningStyleWorkflow } from './core/hooks/useLearningStyleWorkflow';
+import { StudentSelectionStep } from './features/workflow/StudentSelectionStep';
+import { AnalysisStep } from './features/workflow/AnalysisStep';
+import { RecommendationsStep } from './features/workflow/RecommendationsStep';
+import { LearningStyleAnalyticsSection } from './features/workflow/LearningStyleAnalyticsSection';
 
-function LearningStylePredictorCore() {
-    // Get state adapter (decouples from Zustand)
-    const state = useLearningStyleState();
+interface LearningStylePredictorCoreProps {
+    service: ILearningStyleDashboardService;
+}
 
-    // Get business logic (with dependency injection)
-    const { handleSubmit, handleReset, loadingState } = useLearningStyleLogic({
-        service: defaultLearningStyleService,
-        state,
-        enablePersistence: true,
-        enableEvents: true,
-    });
+function LearningStylePredictorCore({ service }: LearningStylePredictorCoreProps) {
+    const workflow = useLearningStyleWorkflow(service);
 
-    // Show results if available
-    if (state.result && state.activeTab === 'results') {
-        return (
-            <LearningStyleResultsView
-                result={state.result}
-                formData={state.formData}
-                onReset={handleReset}
-            />
-        );
-    }
-
-    // Show form
     return (
-        <LearningStyleForm
-            formData={state.formData}
-            isLoading={state.isLoading}
-            error={state.error}
-            loadingState={loadingState}
-            onSubmit={handleSubmit}
-            onReset={handleReset}
-        />
+        <div className="min-h-screen bg-background">
+            <main className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+                <section className="mx-auto w-full max-w-4xl space-y-6">
+                    <StudentSelectionStep
+                        studentLookup={workflow.view.studentLookup}
+                        filteredStudents={workflow.view.filteredStudents}
+                        isStudentListOpen={workflow.view.isStudentListOpen}
+                        profile={workflow.view.profile}
+                        isLoadingProfile={workflow.view.isLoadingProfile}
+                        onStudentLookupChange={workflow.actions.setStudentLookup}
+                        onOpenStudentList={workflow.actions.openStudentList}
+                        onCloseStudentList={workflow.actions.closeStudentList}
+                        onSelectStudent={workflow.actions.selectStudentSuggestion}
+                        onLoadStudentProfile={workflow.actions.loadStudentProfile}
+                    />
+
+                    {workflow.view.workflowStep >= 2 ? (
+                        <AnalysisStep
+                            formData={workflow.state.formData}
+                            isLoading={workflow.state.isLoading}
+                            error={workflow.state.error}
+                            loadingState={workflow.loadingState}
+                            result={workflow.state.result}
+                            onSubmit={workflow.actions.submitAnalysis}
+                            onReset={workflow.actions.resetWorkflow}
+                            onContinue={workflow.actions.goToRecommendations}
+                        />
+                    ) : null}
+
+                    {workflow.view.workflowStep >= 3 && workflow.state.result ? (
+                        <RecommendationsStep
+                            topicFilter={workflow.view.topicFilter}
+                            maxRecommendations={workflow.view.maxRecommendations}
+                            filteredRecommendations={workflow.view.filteredRecommendations}
+                            onTopicFilterChange={workflow.actions.setTopicFilter}
+                            onMaxRecommendationsChange={workflow.actions.setMaxRecommendations}
+                        />
+                    ) : null}
+                </section>
+
+                <LearningStyleAnalyticsSection
+                    styleDistribution={workflow.view.styleDistribution}
+                    topStruggleTopics={workflow.view.topStruggleTopics}
+                />
+            </main>
+        </div>
     );
 }
 
-export function LearningStylePredictor() {
+export interface LearningStylePredictorProps {
+    service?: ILearningStyleDashboardService;
+}
+
+export function LearningStylePredictor({ service = defaultLearningStyleService }: LearningStylePredictorProps) {
     return (
         <PredictorErrorBoundary>
-            <LearningStylePredictorCore />
+            <LearningStylePredictorCore service={service} />
         </PredictorErrorBoundary>
     );
 }
