@@ -4,13 +4,13 @@
  */
 
 import { PredictorErrorBoundary } from '@/components/common/PredictorErrorBoundary';
-import { defaultLearningStyleService } from './services/serviceFactory';
 import type { ILearningStyleDashboardService } from './data/interfaces';
 import { useLearningStyleWorkflow } from './core/hooks/useLearningStyleWorkflow';
-import { StudentSelectionStep } from './features/workflow/StudentSelectionStep';
 import { AnalysisStep } from './features/workflow/AnalysisStep';
-import { RecommendationsStep } from './features/workflow/RecommendationsStep';
 import { LearningStyleAnalyticsSection } from './features/workflow/LearningStyleAnalyticsSection';
+import { RecommendationsStep } from './features/workflow/RecommendationsStep';
+import { StudentSelectionStep } from './features/workflow/StudentSelectionStep';
+import { defaultLearningStyleService } from './services/serviceFactory';
 
 interface LearningStylePredictorCoreProps {
     service: ILearningStyleDashboardService;
@@ -20,9 +20,9 @@ function LearningStylePredictorCore({ service }: LearningStylePredictorCoreProps
     const workflow = useLearningStyleWorkflow(service);
 
     return (
-        <div className="min-h-screen bg-background">
-            <main className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
-                <section className="mx-auto w-full max-w-4xl space-y-6">
+        <div className="min-h-screen bg-[radial-gradient(circle_at_5%_0%,rgba(99,102,241,0.12),transparent_42%),radial-gradient(circle_at_95%_0%,rgba(14,165,233,0.12),transparent_42%),#f4f6fb] pt-20 text-slate-900">
+            <main className="mx-auto max-w-7xl px-4 pb-10 pt-4 sm:px-6 lg:px-8">
+                <section className="grid gap-4">
                     <StudentSelectionStep
                         studentLookup={workflow.view.studentLookup}
                         filteredStudents={workflow.view.filteredStudents}

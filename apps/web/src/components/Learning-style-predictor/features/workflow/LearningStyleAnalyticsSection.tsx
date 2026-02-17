@@ -1,7 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart3, Brain } from 'lucide-react';
-import { useMemo } from 'react';
-import { Bar, Doughnut } from 'react-chartjs-2';
 import type { LearningStyleType } from '../../core/types';
 import type { StruggleTopicData } from '../../data/interfaces';
 import {
@@ -10,6 +6,9 @@ import {
     distributionChartOptions,
     struggleChartOptions,
 } from '../../core/charts/learningStyleCharts';
+import { useMemo } from 'react';
+import { Bar, Doughnut } from 'react-chartjs-2';
+import 'chart.js/auto';
 
 interface LearningStyleAnalyticsSectionProps {
     styleDistribution: Record<LearningStyleType, number>;
@@ -24,40 +23,27 @@ export function LearningStyleAnalyticsSection({
         () => buildDistributionChartData(styleDistribution),
         [styleDistribution]
     );
+
     const struggleChartData = useMemo(
         () => buildStruggleChartData(topStruggleTopics),
         [topStruggleTopics]
     );
 
     return (
-        <section className="grid gap-6 lg:grid-cols-2">
-            <Card className="shadow-sm border-muted">
-                <CardHeader className="pb-4 border-b">
-                    <CardTitle className="flex items-center gap-2">
-                        <BarChart3 className="h-5 w-5 text-primary" />
-                        Learning Style Distribution
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6">
-                    <div className="h-72 w-full">
-                        <Doughnut data={distributionChartData} options={distributionChartOptions} />
-                    </div>
-                </CardContent>
-            </Card>
+        <section className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <h3 className="mb-2 text-base font-bold text-slate-900">Learning Style Distribution</h3>
+                <div className="h-72">
+                    <Doughnut data={distributionChartData} options={distributionChartOptions} />
+                </div>
+            </div>
 
-            <Card className="shadow-sm border-muted">
-                <CardHeader className="pb-4 border-b">
-                    <CardTitle className="flex items-center gap-2">
-                        <Brain className="h-5 w-5 text-primary" />
-                        Top Struggle Topics
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6">
-                    <div className="h-72 w-full">
-                        <Bar data={struggleChartData} options={struggleChartOptions} />
-                    </div>
-                </CardContent>
-            </Card>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <h3 className="mb-2 text-base font-bold text-slate-900">Top Struggle Topics</h3>
+                <div className="h-72">
+                    <Bar data={struggleChartData} options={struggleChartOptions} />
+                </div>
+            </div>
         </section>
     );
 }

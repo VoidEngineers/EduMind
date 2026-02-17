@@ -35,6 +35,7 @@ export const useLearningStyleStore = create<LearningStyleState>()(
                 isLoadingProfile: false,
                 topicFilter: '',
                 maxRecommendations: DEFAULT_MAX_RECOMMENDATIONS,
+                systemStats: null,
                 styleDistribution: INITIAL_STYLE_DISTRIBUTION,
                 topStruggleTopics: [],
                 isStudentListOpen: false,
@@ -123,6 +124,9 @@ export const useLearningStyleStore = create<LearningStyleState>()(
                 setMaxRecommendations: (maxRecommendations) =>
                     set({ maxRecommendations }, false, 'setMaxRecommendations'),
 
+                setSystemStats: (systemStats) =>
+                    set({ systemStats }, false, 'setSystemStats'),
+
                 setStyleDistribution: (styleDistribution) =>
                     set({ styleDistribution }, false, 'setStyleDistribution'),
 
@@ -142,6 +146,7 @@ export const useLearningStyleStore = create<LearningStyleState>()(
                             isLoadingProfile: false,
                             topicFilter: '',
                             maxRecommendations: DEFAULT_MAX_RECOMMENDATIONS,
+                            systemStats: null,
                             styleDistribution: INITIAL_STYLE_DISTRIBUTION,
                             topStruggleTopics: [],
                             isStudentListOpen: false,

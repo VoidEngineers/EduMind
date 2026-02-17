@@ -5,7 +5,11 @@ import type {
     LearningStyleType,
     TabType,
 } from '@/components/Learning-style-predictor/core/types';
-import type { StruggleTopicData, StudentProfileSummaryData } from '@/components/Learning-style-predictor/data/interfaces';
+import type {
+    LearningStyleSystemStats,
+    StruggleTopicData,
+    StudentProfileSummaryData,
+} from '@/components/Learning-style-predictor/data/interfaces';
 
 export type {
     LearningStyleFilters,
@@ -38,6 +42,7 @@ export interface LearningStyleState {
     isLoadingProfile: boolean;
     topicFilter: string;
     maxRecommendations: number;
+    systemStats: LearningStyleSystemStats | null;
     styleDistribution: Record<LearningStyleType, number>;
     topStruggleTopics: StruggleTopicData[];
     isStudentListOpen: boolean;
@@ -70,6 +75,7 @@ export interface LearningStyleState {
     setIsLoadingProfile: (loading: boolean) => void;
     setTopicFilter: (value: string) => void;
     setMaxRecommendations: (value: number) => void;
+    setSystemStats: (stats: LearningStyleSystemStats | null) => void;
     setStyleDistribution: (distribution: Record<LearningStyleType, number>) => void;
     setTopStruggleTopics: (topics: StruggleTopicData[]) => void;
     setStudentListOpen: (open: boolean) => void;
