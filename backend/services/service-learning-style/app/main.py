@@ -41,6 +41,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from contextlib import asynccontextmanager
 from backend.shared.messaging import get_broker
 
+
 # Setup logging
 setup_logging()
 logger = get_logger(__name__)
@@ -61,7 +62,7 @@ async def lifespan(app: FastAPI):
     await broker.close()
     logger.info("Closed RabbitMQ connection")
 
-# Create FastAPI app
+# Create FastAPI app (single instance)
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
@@ -69,6 +70,15 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan
+)
+
+# Add CORS middleware after app creation
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Shared middleware

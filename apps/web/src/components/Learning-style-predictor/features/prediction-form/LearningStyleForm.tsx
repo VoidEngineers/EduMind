@@ -40,45 +40,7 @@ function FormFields({
                     {...register('student_id')}
                 />
                 {errors.student_id ? <p className="text-xs font-semibold text-red-600">{errors.student_id.message}</p> : null}
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                <div className="grid gap-1.5">
-                    <label htmlFor="video_watch_time" className="text-xs font-semibold uppercase tracking-wide text-slate-700">Video Watching (min)</label>
-                    <input
-                        id="video_watch_time"
-                        type="number"
-                        min={0}
-                        className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                        {...register('video_watch_time', { valueAsNumber: true })}
-                    />
-                    {errors.video_watch_time ? <p className="text-xs font-semibold text-red-600">{errors.video_watch_time.message}</p> : null}
-                </div>
-
-                <div className="grid gap-1.5">
-                    <label htmlFor="reading_time" className="text-xs font-semibold uppercase tracking-wide text-slate-700">Reading (min)</label>
-                    <input
-                        id="reading_time"
-                        type="number"
-                        min={0}
-                        className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                        {...register('reading_time', { valueAsNumber: true })}
-                    />
-                    {errors.reading_time ? <p className="text-xs font-semibold text-red-600">{errors.reading_time.message}</p> : null}
-                </div>
-
-                <div className="grid gap-1.5">
-                    <label htmlFor="interactive_time" className="text-xs font-semibold uppercase tracking-wide text-slate-700">Interactive (min)</label>
-                    <input
-                        id="interactive_time"
-                        type="number"
-                        min={0}
-                        className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                        {...register('interactive_time', { valueAsNumber: true })}
-                    />
-                    {errors.interactive_time ? <p className="text-xs font-semibold text-red-600">{errors.interactive_time.message}</p> : null}
-                </div>
-            </div>
+            </div>         
         </>
     );
 }

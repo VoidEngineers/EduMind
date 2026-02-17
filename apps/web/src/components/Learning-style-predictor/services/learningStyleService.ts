@@ -20,7 +20,7 @@ import {
 } from '../core/schemas/learningStyleApiSchema';
 import type { LearningStyleFormData, LearningStyleResult, LearningStyleType } from '../core/types';
 
-const API_BASE_URL = import.meta.env.VITE_LEARNING_STYLE_API_URL || 'http://localhost:8005';
+const API_BASE_URL = import.meta.env.VITE_LEARNING_STYLE_API_URL || 'http://localhost:8003';
 const API_V1_PREFIX = '/api/v1';
 
 const STYLE_ORDER: LearningStyleType[] = ['visual', 'auditory', 'reading', 'kinesthetic'];
