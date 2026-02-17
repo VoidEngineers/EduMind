@@ -1,14 +1,19 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import type { LearningStyleFilters, LearningStyleState } from './types';
-import { INITIAL_FORM_DATA } from '@/components/Learning-style-predictor/core/constants';
-import { DEFAULT_MAX_RECOMMENDATIONS } from '@/components/Learning-style-predictor/core/constants/uiConfig';
+import type { LearningStyleFilters, LearningStyleFormData, LearningStyleState } from './types';
 
-const INITIAL_STYLE_DISTRIBUTION = {
-    visual: 0,
-    auditory: 0,
-    reading: 0,
-    kinesthetic: 0,
+const INITIAL_FORM_DATA: LearningStyleFormData = {
+    student_id: '',
+    prefers_diagrams: 3,
+    prefers_lectures: 3,
+    prefers_reading: 3,
+    prefers_hands_on: 3,
+    note_taking_style: 'mixed',
+    study_environment: 'varies',
+    retention_method: 'seeing',
+    video_watch_time: 30,
+    reading_time: 30,
+    interactive_time: 30,
 };
 
 const INITIAL_FILTERS: LearningStyleFilters = {
@@ -28,16 +33,6 @@ export const useLearningStyleStore = create<LearningStyleState>()(
                 activeTab: 'form',
                 theme: 'light',
                 filters: INITIAL_FILTERS,
-                workflowStep: 1,
-                studentLookup: '',
-                knownStudents: [],
-                profile: null,
-                isLoadingProfile: false,
-                topicFilter: '',
-                maxRecommendations: DEFAULT_MAX_RECOMMENDATIONS,
-                styleDistribution: INITIAL_STYLE_DISTRIBUTION,
-                topStruggleTopics: [],
-                isStudentListOpen: false,
 
                 // Form actions
                 updateFormData: (data) =>
@@ -100,62 +95,12 @@ export const useLearningStyleStore = create<LearningStyleState>()(
 
                 resetFilters: () =>
                     set({ filters: INITIAL_FILTERS }, false, 'resetFilters'),
-
-                // Workflow actions
-                setWorkflowStep: (workflowStep) =>
-                    set({ workflowStep }, false, 'setWorkflowStep'),
-
-                setStudentLookup: (studentLookup) =>
-                    set({ studentLookup }, false, 'setStudentLookup'),
-
-                setKnownStudents: (knownStudents) =>
-                    set({ knownStudents }, false, 'setKnownStudents'),
-
-                setProfile: (profile) =>
-                    set({ profile }, false, 'setProfile'),
-
-                setIsLoadingProfile: (isLoadingProfile) =>
-                    set({ isLoadingProfile }, false, 'setIsLoadingProfile'),
-
-                setTopicFilter: (topicFilter) =>
-                    set({ topicFilter }, false, 'setTopicFilter'),
-
-                setMaxRecommendations: (maxRecommendations) =>
-                    set({ maxRecommendations }, false, 'setMaxRecommendations'),
-
-                setStyleDistribution: (styleDistribution) =>
-                    set({ styleDistribution }, false, 'setStyleDistribution'),
-
-                setTopStruggleTopics: (topStruggleTopics) =>
-                    set({ topStruggleTopics }, false, 'setTopStruggleTopics'),
-
-                setStudentListOpen: (isStudentListOpen) =>
-                    set({ isStudentListOpen }, false, 'setStudentListOpen'),
-
-                resetWorkflowUi: () =>
-                    set(
-                        {
-                            workflowStep: 1,
-                            studentLookup: '',
-                            knownStudents: [],
-                            profile: null,
-                            isLoadingProfile: false,
-                            topicFilter: '',
-                            maxRecommendations: DEFAULT_MAX_RECOMMENDATIONS,
-                            styleDistribution: INITIAL_STYLE_DISTRIBUTION,
-                            topStruggleTopics: [],
-                            isStudentListOpen: false,
-                        },
-                        false,
-                        'resetWorkflowUi'
-                    ),
             }),
             {
                 name: 'learning-style-storage',
                 partialize: (state) => ({
                     formData: state.formData,
                     theme: state.theme,
-                    studentLookup: state.studentLookup,
                 }),
             }
         ),

@@ -1,7 +1,0 @@
-export const STUDENT_LOOKUP_LIMIT = 200;
-export const STUDENT_SUGGESTION_LIMIT = 8;
-export const STUDENT_LIST_CLOSE_DELAY_MS = 100;
-
-export const DEFAULT_MAX_RECOMMENDATIONS = 5;
-export const MIN_RECOMMENDATIONS = 1;
-export const MAX_RECOMMENDATIONS = 10;

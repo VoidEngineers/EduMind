@@ -1,261 +1,132 @@
 /**
- * Learning Style API Service
- * Backend-driven implementation for learning style prediction and dashboard data.
+ * Learning Style Prediction Service
+ * Mock service for learning style predictions
  */
 
-import type {
-    HealthCheckResponse,
-    ILearningStyleDashboardService,
-    LearningStyleSystemStats,
-    StudentProfileSummaryData,
-} from '../data/interfaces';
-import {
-    LearningStyleHealthResponseSchema,
-    LearningStylePredictionApiSchema,
-    LearningStyleRecommendationsApiSchema,
-    LearningStyleStudentProfileApiSchema,
-    LearningStyleStudentSummaryApiSchema,
-    LearningStyleSystemStatsApiSchema,
-    type LearningStylePredictionApiResponse,
-} from '../core/schemas/learningStyleApiSchema';
 import type { LearningStyleFormData, LearningStyleResult, LearningStyleType } from '../core/types';
+import type { HealthCheckResponse, ILearningStyleService } from '../data/interfaces';
 
-const API_BASE_URL = import.meta.env.VITE_LEARNING_STYLE_API_URL || 'http://localhost:8005';
-const API_V1_PREFIX = '/api/v1';
 
-const STYLE_ORDER: LearningStyleType[] = ['visual', 'auditory', 'reading', 'kinesthetic'];
+// Mock API delay
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function normalizeStyleKey(value: string): LearningStyleType | null {
-    const normalized = value.trim().toLowerCase();
+/**
+ * Calculate learning style based on form data
+ */
+function calculateLearningStyle(data: LearningStyleFormData): LearningStyleResult {
+    // Calculate style scores based on preferences and behaviors
+    const visual =
+        data.prefers_diagrams * 20 +
+        (data.note_taking_style === 'visual' ? 25 : 0) +
+        (data.retention_method === 'seeing' ? 25 : 0) +
+        (data.video_watch_time / 60) * 10;
 
-    if (normalized.includes('visual')) return 'visual';
-    if (normalized.includes('auditory') || normalized.includes('audio')) return 'auditory';
-    if (normalized.includes('reading') || normalized.includes('writing')) return 'reading';
-    if (normalized.includes('kinesthetic') || normalized.includes('kinaesthetic')) return 'kinesthetic';
+    const auditory =
+        data.prefers_lectures * 20 +
+        (data.note_taking_style === 'audio' ? 25 : 0) +
+        (data.retention_method === 'hearing' ? 25 : 0) +
+        (data.study_environment === 'music' ? 15 : 0);
 
-    return null;
-}
+    const reading =
+        data.prefers_reading * 20 +
+        (data.note_taking_style === 'written' ? 25 : 0) +
+        (data.retention_method === 'reading' ? 25 : 0) +
+        (data.reading_time / 60) * 10;
 
-function mapPreferredDifficulty(value: string): StudentProfileSummaryData['preferredDifficulty'] {
-    const normalized = value.trim().toLowerCase();
+    const kinesthetic =
+        data.prefers_hands_on * 20 +
+        (data.retention_method === 'doing' ? 25 : 0) +
+        (data.interactive_time / 60) * 10 +
+        (data.study_environment === 'group' ? 15 : 0);
 
-    if (normalized === 'hard' || normalized === 'intensive') return 'Intensive';
-    if (normalized === 'easy' || normalized === 'light') return 'Light';
-
-    return 'Standard';
-}
-
-function toPercentage(value: number): number {
-    if (value <= 1) {
-        return Math.round(value * 100);
-    }
-
-    return Math.round(value);
-}
-
-function createStyleScoreMap(response: LearningStylePredictionApiResponse): Record<LearningStyleType, number> {
-    const scoreMap: Record<LearningStyleType, number> = {
-        visual: 0,
-        auditory: 0,
-        reading: 0,
-        kinesthetic: 0,
+    // Normalize scores to 0-100
+    const maxPossible = 100;
+    const scores = {
+        visual: Math.min(100, Math.round((visual / maxPossible) * 100)),
+        auditory: Math.min(100, Math.round((auditory / maxPossible) * 100)),
+        reading: Math.min(100, Math.round((reading / maxPossible) * 100)),
+        kinesthetic: Math.min(100, Math.round((kinesthetic / maxPossible) * 100)),
     };
 
-    Object.entries(response.probabilities).forEach(([style, probability]) => {
-        const mappedStyle = normalizeStyleKey(style);
-        if (!mappedStyle) return;
-        scoreMap[mappedStyle] = toPercentage(probability);
-    });
+    // Determine primary and secondary styles
+    type NonNullableStyle = 'visual' | 'auditory' | 'reading' | 'kinesthetic';
+    const sortedStyles = Object.entries(scores)
+        .sort(([, a], [, b]) => b - a) as [NonNullableStyle, number][];
 
-    return scoreMap;
+    const primary_style: LearningStyleType = sortedStyles[0][0];
+    const secondary_style: LearningStyleType = sortedStyles[1][0];
+
+    // Calculate confidence based on score difference
+    const confidence = Math.min(95, 60 + (sortedStyles[0][1] - sortedStyles[1][1]));
+
+    // Generate recommendations
+    const recommendations = generateRecommendations(primary_style, secondary_style);
+
+    return {
+        primary_style,
+        secondary_style,
+        style_scores: scores,
+        confidence,
+        recommendations,
+        timestamp: new Date().toISOString(),
+    };
 }
 
-function toSecondaryStyle(scoreMap: Record<LearningStyleType, number>, primaryStyle: LearningStyleType): LearningStyleType {
-    const sorted = STYLE_ORDER
-        .filter((style) => style !== primaryStyle)
-        .sort((a, b) => scoreMap[b] - scoreMap[a]);
+function generateRecommendations(primary: LearningStyleType, secondary: LearningStyleType): string[] {
+    const recs: Record<string, string[]> = {
+        visual: [
+            'Use mind maps and diagrams to organize information',
+            'Watch video tutorials and demonstrations',
+            'Color-code notes and use highlighters',
+            'Create flowcharts for complex processes',
+        ],
+        auditory: [
+            'Record lectures and listen to them again',
+            'Join study groups for discussions',
+            'Use text-to-speech for reading materials',
+            'Explain concepts out loud to yourself',
+        ],
+        reading: [
+            'Take detailed written notes during lectures',
+            'Read textbooks and research papers',
+            'Create written summaries of key concepts',
+            'Use flashcards with written definitions',
+        ],
+        kinesthetic: [
+            'Take frequent breaks during study sessions',
+            'Use hands-on experiments and simulations',
+            'Walk while reviewing materials',
+            'Build models or create physical representations',
+        ],
+    };
 
-    return sorted[0] ?? 'reading';
+    const primaryRecs = primary ? recs[primary] || [] : [];
+    const secondaryRecs = secondary ? recs[secondary] || [] : [];
+
+    return [...primaryRecs.slice(0, 3), ...secondaryRecs.slice(0, 1)];
 }
 
-function toErrorMessage(detail: unknown): string {
-    if (typeof detail === 'string' && detail.trim().length > 0) {
-        return detail;
-    }
-
-    if (typeof detail === 'object' && detail) {
-        const typedDetail = detail as Record<string, unknown>;
-        if (typeof typedDetail.message === 'string' && typedDetail.message.trim().length > 0) {
-            return typedDetail.message;
-        }
-        if (typeof typedDetail.error === 'string' && typedDetail.error.trim().length > 0) {
-            return typedDetail.error;
-        }
-    }
-
-    return 'Request failed';
-}
-
-async function requestJson<T>(
-    input: RequestInfo | URL,
-    init: RequestInit | undefined,
-    schema: { parse: (payload: unknown) => T }
-): Promise<T> {
-    const response = await fetch(input, init);
-
-    if (!response.ok) {
-        const details = await response.json().catch(() => null);
-        const detailMessage = typeof details === 'object' && details && 'detail' in details
-            ? toErrorMessage((details as { detail: unknown }).detail)
-            : response.statusText;
-
-        throw new Error(detailMessage || 'Request failed');
-    }
-
-    const payload = await response.json();
-    return schema.parse(payload);
-}
-
-class LearningStyleApiService implements ILearningStyleDashboardService {
-    constructor(private readonly baseURL: string = API_BASE_URL) {}
-
-    async checkHealth(): Promise<HealthCheckResponse> {
-        const payload = await requestJson(`${this.baseURL}/health`, undefined, LearningStyleHealthResponseSchema);
-
-        const normalizedStatus = payload.status.toLowerCase();
-        const status: HealthCheckResponse['status'] = normalizedStatus === 'healthy'
-            ? 'healthy'
-            : normalizedStatus === 'down'
-                ? 'down'
-                : 'degraded';
-
-        return {
-            status,
-            message: payload.message || `Learning style service is ${status}`,
-        };
-    }
-
-    async listStudentIds(limit = 100): Promise<string[]> {
-        const payload = await requestJson(
-            `${this.baseURL}${API_V1_PREFIX}/students?limit=${limit}`,
-            undefined,
-            LearningStyleStudentSummaryApiSchema.array()
-        );
-
-        return payload.map((item) => item.student_id);
-    }
-
-    async getStudentProfile(studentId: string): Promise<StudentProfileSummaryData> {
-        const payload = await requestJson(
-            `${this.baseURL}${API_V1_PREFIX}/students/${encodeURIComponent(studentId)}`,
-            undefined,
-            LearningStyleStudentProfileApiSchema
-        );
-
-        return {
-            studentId: payload.student_id,
-            completionRate: Math.round(payload.avg_completion_rate),
-            daysTracked: payload.days_tracked,
-            preferredDifficulty: mapPreferredDifficulty(payload.preferred_difficulty),
-        };
-    }
-
-    async getSystemStats(): Promise<LearningStyleSystemStats> {
-        const payload = await requestJson(
-            `${this.baseURL}${API_V1_PREFIX}/system/stats`,
-            undefined,
-            LearningStyleSystemStatsApiSchema
-        );
-
-        const distribution: Record<LearningStyleType, number> = {
-            visual: 0,
-            auditory: 0,
-            reading: 0,
-            kinesthetic: 0,
-        };
-
-        Object.entries(payload.learning_style_distribution).forEach(([style, count]) => {
-            const mappedStyle = normalizeStyleKey(style);
-            if (!mappedStyle) return;
-            distribution[mappedStyle] = count;
-        });
-
-        return {
-            totalStudents: payload.total_students,
-            totalResources: payload.total_resources,
-            totalRecommendations: payload.total_recommendations,
-            recommendationCompletionRate: payload.recommendation_completion_rate,
-            learningStyleDistribution: distribution,
-            topStruggleTopics: payload.most_common_struggle_topics.map((topic) => ({
-                label: topic.topic,
-                count: topic.count,
-            })),
-        };
-    }
-
+export const learningStyleService: ILearningStyleService = {
+    /**
+     * Predict learning style based on student data
+     */
     async predictLearningStyle(data: LearningStyleFormData): Promise<LearningStyleResult> {
-        if (!data.student_id.trim()) {
+        // Simulate API call
+        await delay(1500);
+
+        // Validate input
+        if (!data.student_id) {
             throw new Error('Student ID is required');
         }
 
-        const predictionResponse = await requestJson(
-            `${this.baseURL}${API_V1_PREFIX}/ml/classify-and-update/${encodeURIComponent(data.student_id)}`,
-            {
-                method: 'POST',
-            },
-            LearningStylePredictionApiSchema
-        );
+        return calculateLearningStyle(data);
+    },
 
-        const styleScores = createStyleScoreMap(predictionResponse);
-
-        const mappedPrimaryStyle = normalizeStyleKey(predictionResponse.predicted_style);
-        const primaryStyle = mappedPrimaryStyle ?? STYLE_ORDER.sort((a, b) => styleScores[b] - styleScores[a])[0] ?? 'reading';
-        const secondaryStyle = toSecondaryStyle(styleScores, primaryStyle);
-
-        let recommendations: string[] = [];
-
-        try {
-            const generated = await requestJson(
-                `${this.baseURL}${API_V1_PREFIX}/recommendations/generate`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        student_id: data.student_id,
-                        max_recommendations: 10,
-                    }),
-                },
-                LearningStyleRecommendationsApiSchema
-            );
-
-            recommendations = generated.map((item) => {
-                const title = item.resource?.title?.trim();
-                const reason = item.reason?.trim();
-
-                if (title && reason) return `${title}: ${reason}`;
-                if (title) return title;
-                if (reason) return reason;
-                return 'Personalized learning resource';
-            });
-        } catch {
-            recommendations = [];
-        }
-
-        return {
-            primary_style: primaryStyle,
-            secondary_style: secondaryStyle,
-            style_scores: styleScores,
-            confidence: toPercentage(predictionResponse.confidence),
-            recommendations,
-            timestamp: predictionResponse.predicted_at,
-        };
-    }
-}
-
-// Export singleton instance
-export const learningStyleService: ILearningStyleDashboardService = new LearningStyleApiService();
-
-// Export class for testing/DI
-export { LearningStyleApiService };
+    /**
+     * Check if service is healthy
+     */
+    async checkHealth(): Promise<HealthCheckResponse> {
+        await delay(200);
+        return { status: 'healthy', message: 'Learning Style Prediction service is operational' };
+    },
+};

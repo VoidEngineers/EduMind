@@ -4,7 +4,7 @@
  * Enhanced with state machine, error handling, events, and persistence
  */
 
-import { PredictionError, PredictionErrorType, ValidationError } from '@/components/common/errors/PredictionError';
+import { PredictionError, ValidationError } from '@/components/common/errors/PredictionError';
 import type { LoadingState } from '@/components/common/types/LoadingState';
 import { LOADING_STATES } from '@/components/common/types/LoadingState';
 import { PREDICTION_EVENTS, eventBus, type PredictionErrorEvent, type PredictionStartedEvent, type PredictionSuccessEvent } from '@/lib/events/eventBus';
@@ -100,7 +100,7 @@ export function useLearningStyleLogic({
                 ? error
                 : new PredictionError(
                     error instanceof Error ? error.message : 'Unknown error',
-                    PredictionErrorType.UNKNOWN_ERROR
+                    'UNKNOWN_ERROR' as any
                 );
 
             const errorMessage = predictionError.getUserMessage();
