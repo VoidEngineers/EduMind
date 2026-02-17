@@ -4,10 +4,6 @@
  */
 
 import type { LoadingState } from '@/components/common/types/LoadingState';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Brain, Loader2, RotateCcw } from 'lucide-react';
 import { useEffect } from 'react';
@@ -23,6 +19,68 @@ interface LearningStyleFormProps {
     onSubmit: (data: LearningStyleFormData) => void;
     onReset: () => void;
     showHeader?: boolean;
+}
+
+function FormFields({
+    register,
+    errors,
+}: {
+    register: ReturnType<typeof useForm<LearningStyleSchema>>['register'];
+    errors: ReturnType<typeof useForm<LearningStyleSchema>>['formState']['errors'];
+}) {
+    return (
+        <>
+            <div className="grid gap-1.5">
+                <label htmlFor="student_id" className="text-xs font-semibold uppercase tracking-wide text-slate-700">Student ID</label>
+                <input
+                    id="student_id"
+                    type="text"
+                    className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                    placeholder="Enter student ID"
+                    {...register('student_id')}
+                />
+                {errors.student_id ? <p className="text-xs font-semibold text-red-600">{errors.student_id.message}</p> : null}
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                <div className="grid gap-1.5">
+                    <label htmlFor="video_watch_time" className="text-xs font-semibold uppercase tracking-wide text-slate-700">Video Watching (min)</label>
+                    <input
+                        id="video_watch_time"
+                        type="number"
+                        min={0}
+                        className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                        {...register('video_watch_time', { valueAsNumber: true })}
+                    />
+                    {errors.video_watch_time ? <p className="text-xs font-semibold text-red-600">{errors.video_watch_time.message}</p> : null}
+                </div>
+
+                <div className="grid gap-1.5">
+                    <label htmlFor="reading_time" className="text-xs font-semibold uppercase tracking-wide text-slate-700">Reading (min)</label>
+                    <input
+                        id="reading_time"
+                        type="number"
+                        min={0}
+                        className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                        {...register('reading_time', { valueAsNumber: true })}
+                    />
+                    {errors.reading_time ? <p className="text-xs font-semibold text-red-600">{errors.reading_time.message}</p> : null}
+                </div>
+
+                <div className="grid gap-1.5">
+                    <label htmlFor="interactive_time" className="text-xs font-semibold uppercase tracking-wide text-slate-700">Interactive (min)</label>
+                    <input
+                        id="interactive_time"
+                        type="number"
+                        min={0}
+                        className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                        {...register('interactive_time', { valueAsNumber: true })}
+                    />
+                    {errors.interactive_time ? <p className="text-xs font-semibold text-red-600">{errors.interactive_time.message}</p> : null}
+                </div>
+            </div>
+        </>
+    );
 }
 
 export function LearningStyleForm({
@@ -43,66 +101,15 @@ export function LearningStyleForm({
         form.reset(formData);
     }, [form, formData]);
 
-    const { register, handleSubmit, formState: { errors } } = form;
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = form;
 
     const formContent = (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Student Info */}
-            <Card className="shadow-sm border-muted">
-                <CardHeader className="pb-4 border-b">
-                    <CardTitle>Student Information</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6">
-                    <div className="space-y-2">
-                        <Label htmlFor="student_id">Student ID</Label>
-                        <Input
-                            id="student_id"
-                            placeholder="Enter student ID"
-                            {...register('student_id')}
-                        />
-                        {errors.student_id && <p className="text-sm text-destructive">{errors.student_id.message}</p>}
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Time Metrics */}
-            <Card className="shadow-sm border-muted">
-                <CardHeader className="pb-4 border-b">
-                    <CardTitle>Learning Activity Time (minutes per session)</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                        <Label htmlFor="video_watch_time">Video Watching</Label>
-                        <Input
-                            id="video_watch_time"
-                            type="number"
-                            min={0}
-                            {...register('video_watch_time', { valueAsNumber: true })}
-                        />
-                        {errors.video_watch_time && <p className="text-sm text-destructive">{errors.video_watch_time.message}</p>}
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="reading_time">Reading</Label>
-                        <Input
-                            id="reading_time"
-                            type="number"
-                            min={0}
-                            {...register('reading_time', { valueAsNumber: true })}
-                        />
-                        {errors.reading_time && <p className="text-sm text-destructive">{errors.reading_time.message}</p>}
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="interactive_time">Interactive Activities</Label>
-                        <Input
-                            id="interactive_time"
-                            type="number"
-                            min={0}
-                            {...register('interactive_time', { valueAsNumber: true })}
-                        />
-                        {errors.interactive_time && <p className="text-sm text-destructive">{errors.interactive_time.message}</p>}
-                    </div>
-                </CardContent>
-            </Card>
+        <form onSubmit={handleSubmit(onSubmit)} className="grid gap-3">
+            <FormFields register={register} errors={errors} />
 
             {/* Hidden defaults for removed sections to keep schema and service contract valid */}
             <input type="hidden" {...register('prefers_diagrams', { valueAsNumber: true })} />
@@ -113,31 +120,26 @@ export function LearningStyleForm({
             <input type="hidden" {...register('study_environment')} />
             <input type="hidden" {...register('retention_method')} />
 
-            {/* Error Display */}
-            {error && (
-                <div className="p-4 bg-destructive/10 text-destructive rounded-lg">
-                    {error}
-                </div>
-            )}
+            {error ? <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{error}</div> : null}
 
-            <div className="flex gap-4">
-                <Button type="submit" disabled={isLoading} className="flex-1">
-                    {isLoading ? (
-                        <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            {loadingState?.message || 'Analyzing...'}
-                        </>
-                    ) : (
-                        <>
-                            <Brain className="h-4 w-4 mr-2" />
-                            Analyze Learning Style
-                        </>
-                    )}
-                </Button>
-                <Button type="button" variant="outline" onClick={onReset}>
-                    <RotateCcw className="h-4 w-4 mr-2" />
-                    Reset
-                </Button>
+            <div className="flex flex-wrap gap-2">
+                <button
+                    type="submit"
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 px-4 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
+                    disabled={isLoading}
+                >
+                    {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Brain size={18} />}
+                    <span>{isLoading ? (loadingState?.message || 'Analyzing...') : 'Analyze Learning Style'}</span>
+                </button>
+
+                <button
+                    type="button"
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100"
+                    onClick={onReset}
+                >
+                    <RotateCcw size={16} />
+                    <span>Reset</span>
+                </button>
             </div>
         </form>
     );
@@ -147,15 +149,10 @@ export function LearningStyleForm({
     }
 
     return (
-        <div className="max-w-4xl mx-auto p-6">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold flex items-center gap-3">
-                    <Brain className="h-8 w-8 text-primary" />
-                    Learning Style Predictor
-                </h1>
-                <p className="text-muted-foreground mt-2">
-                    Discover your preferred learning style to optimize your study approach
-                </p>
+        <div className="mx-auto max-w-4xl p-4">
+            <div>
+                <h1 className="text-2xl font-bold text-slate-900">Learning Style Predictor</h1>
+                <p className="mt-1 text-sm text-slate-600">Discover your preferred learning style to optimize your study approach.</p>
             </div>
             {formContent}
         </div>

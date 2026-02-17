@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import type { LoadingState } from '@/components/common/types/LoadingState';
 import type { LearningStyleType, LearningStyleFormData } from '../types';
-import type { ILearningStyleDashboardService, StruggleTopicData, StudentProfileSummaryData } from '../../data/interfaces';
+import type {
+    ILearningStyleDashboardService,
+    LearningStyleSystemStats,
+    StruggleTopicData,
+    StudentProfileSummaryData,
+} from '../../data/interfaces';
 import { useLearningStyleLogic } from './useLearningStyleLogic';
 import { useLearningStyleState, type LearningStyleStateAdapter } from './useLearningStyleState';
 import { useLearningStyleStore } from '@/store/learning-style';
@@ -18,6 +23,7 @@ export interface LearningStyleWorkflowState {
     isLoadingProfile: boolean;
     topicFilter: string;
     maxRecommendations: number;
+    systemStats: LearningStyleSystemStats | null;
     styleDistribution: Record<LearningStyleType, number>;
     topStruggleTopics: StruggleTopicData[];
     isStudentListOpen: boolean;
@@ -56,6 +62,7 @@ export function useLearningStyleWorkflow(service: ILearningStyleDashboardService
         isLoadingProfile,
         topicFilter,
         maxRecommendations,
+        systemStats,
         styleDistribution,
         topStruggleTopics,
         isStudentListOpen,
@@ -66,6 +73,7 @@ export function useLearningStyleWorkflow(service: ILearningStyleDashboardService
         setIsLoadingProfile,
         setTopicFilter,
         setMaxRecommendations,
+        setSystemStats,
         setStyleDistribution,
         setTopStruggleTopics,
         setStudentListOpen,
@@ -87,12 +95,13 @@ export function useLearningStyleWorkflow(service: ILearningStyleDashboardService
             ]);
 
             setKnownStudents(students);
+            setSystemStats(stats);
             setStyleDistribution(stats.learningStyleDistribution);
             setTopStruggleTopics(stats.topStruggleTopics);
         } catch (error) {
             console.error('Failed to refresh learning style dashboard metrics', error);
         }
-    }, [service, setKnownStudents, setStyleDistribution, setTopStruggleTopics]);
+    }, [service, setKnownStudents, setSystemStats, setStyleDistribution, setTopStruggleTopics]);
 
     useEffect(() => {
         const initialize = async () => {
@@ -180,6 +189,7 @@ export function useLearningStyleWorkflow(service: ILearningStyleDashboardService
             isLoadingProfile,
             topicFilter,
             maxRecommendations,
+            systemStats,
             styleDistribution,
             topStruggleTopics,
             isStudentListOpen,
