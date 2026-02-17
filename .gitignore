@@ -213,6 +213,9 @@ temp/
 **/data/*
 !**/data/.gitkeep
 !**/data/README.md
+# Keep learning-style predictor source-code data folder tracked
+!apps/web/src/components/Learning-style-predictor/data/
+!apps/web/src/components/Learning-style-predictor/data/**
 
 # Model checkpoints
 **/checkpoints/
