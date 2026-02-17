@@ -4,6 +4,7 @@
  */
 
 import { PredictorErrorBoundary } from '@/components/common/PredictorErrorBoundary';
+import { BookOpenCheck, ChartNoAxesCombined, Database, Users } from 'lucide-react';
 import type { ILearningStyleDashboardService } from './data/interfaces';
 import { useLearningStyleWorkflow } from './core/hooks/useLearningStyleWorkflow';
 import { AnalysisStep } from './features/workflow/AnalysisStep';
@@ -16,12 +17,81 @@ interface LearningStylePredictorCoreProps {
     service: ILearningStyleDashboardService;
 }
 
+function formatPercentage(value: number | undefined): string {
+    if (typeof value !== 'number' || Number.isNaN(value)) {
+        return '--';
+    }
+
+    const normalized = value <= 1 ? value * 100 : value;
+    return `${Math.round(normalized)}%`;
+}
+
 function LearningStylePredictorCore({ service }: LearningStylePredictorCoreProps) {
     const workflow = useLearningStyleWorkflow(service);
+
+    const status = workflow.view.systemHealthStatus;
+    const stats = workflow.view.systemStats;
+    const statusLabel = status === 'checking'
+        ? 'Checking...'
+        : status === 'healthy'
+            ? 'System Online'
+            : status === 'degraded'
+                ? 'System Degraded'
+                : 'System Offline';
+
+    const statusClasses = status === 'healthy'
+        ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+        : status === 'degraded'
+            ? 'border-amber-300 bg-amber-50 text-amber-700'
+            : status === 'checking'
+                ? 'border-slate-300 bg-slate-50 text-slate-700'
+                : 'border-red-300 bg-red-50 text-red-700';
 
     return (
         <div className="min-h-screen bg-[radial-gradient(circle_at_5%_0%,rgba(99,102,241,0.12),transparent_42%),radial-gradient(circle_at_95%_0%,rgba(14,165,233,0.12),transparent_42%),#f4f6fb] pt-20 text-slate-900">
             <main className="mx-auto max-w-7xl px-4 pb-10 pt-4 sm:px-6 lg:px-8">
+                <section className="mb-4 grid gap-3">
+                    <div className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${statusClasses}`}>
+                        <span className={`h-2 w-2 rounded-full ${status === 'healthy' ? 'bg-emerald-500' : status === 'degraded' ? 'bg-amber-500' : status === 'checking' ? 'bg-slate-500' : 'bg-red-500'}`} />
+                        <span>{statusLabel}</span>
+                    </div>
+                    <p className="text-xs text-slate-600">{workflow.view.systemHealthMessage}</p>
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        <article className="rounded-xl border border-indigo-200 bg-white p-3 shadow-sm">
+                            <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
+                                <Users size={18} />
+                            </div>
+                            <p className="text-xl font-bold text-slate-900">{stats?.totalStudents ?? '--'}</p>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Total Students</p>
+                        </article>
+
+                        <article className="rounded-xl border border-sky-200 bg-white p-3 shadow-sm">
+                            <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100 text-sky-700">
+                                <Database size={18} />
+                            </div>
+                            <p className="text-xl font-bold text-slate-900">{stats?.totalResources ?? '--'}</p>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Resources</p>
+                        </article>
+
+                        <article className="rounded-xl border border-violet-200 bg-white p-3 shadow-sm">
+                            <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 text-violet-700">
+                                <BookOpenCheck size={18} />
+                            </div>
+                            <p className="text-xl font-bold text-slate-900">{stats?.totalRecommendations ?? '--'}</p>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Recommendations</p>
+                        </article>
+
+                        <article className="rounded-xl border border-emerald-200 bg-white p-3 shadow-sm">
+                            <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                                <ChartNoAxesCombined size={18} />
+                            </div>
+                            <p className="text-xl font-bold text-slate-900">{formatPercentage(stats?.recommendationCompletionRate)}</p>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Success Rate</p>
+                        </article>
+                    </div>
+                </section>
+
                 <section className="grid gap-4">
                     <StudentSelectionStep
                         studentLookup={workflow.view.studentLookup}
@@ -53,9 +123,13 @@ function LearningStylePredictorCore({ service }: LearningStylePredictorCoreProps
                         <RecommendationsStep
                             topicFilter={workflow.view.topicFilter}
                             maxRecommendations={workflow.view.maxRecommendations}
-                            filteredRecommendations={workflow.view.filteredRecommendations}
+                            generatedRecommendations={workflow.view.generatedRecommendations}
+                            recommendationsRequested={workflow.view.recommendationsRequested}
+                            isGeneratingRecommendations={workflow.view.isGeneratingRecommendations}
+                            recommendationError={workflow.view.recommendationError}
                             onTopicFilterChange={workflow.actions.setTopicFilter}
                             onMaxRecommendationsChange={workflow.actions.setMaxRecommendations}
+                            onGenerateRecommendations={workflow.actions.generateRecommendations}
                         />
                     ) : null}
                 </section>

@@ -37,7 +37,7 @@ export function createLearningStyleService(config: ServiceConfig): ILearningStyl
  */
 function createMockService(delay: number): ILearningStyleDashboardService {
     return {
-        async predictLearningStyle(data) {
+        async predictLearningStyle() {
             await new Promise(resolve => setTimeout(resolve, delay));
 
             return {
@@ -93,6 +93,24 @@ function createMockService(delay: number): ILearningStyleDashboardService {
                 ],
             };
         },
+        async generateRecommendations(studentId: string, maxRecommendations = 5) {
+            await new Promise(resolve => setTimeout(resolve, delay));
+
+            const recommendations = [
+                `Visual summary cards for ${studentId}`,
+                `Topic-focused flashcards and recall drills`,
+                `Short practice quizzes with immediate feedback`,
+                `Concept map review session`,
+                `Guided worked examples followed by self-practice`,
+                `Mini project applying lesson concepts`,
+                `Peer explanation exercise`,
+                `Weekly spaced revision plan`,
+                `Video + notes recap sequence`,
+                `Confidence-based adaptive worksheet`,
+            ];
+
+            return recommendations.slice(0, Math.max(1, Math.min(10, Math.floor(maxRecommendations))));
+        },
     };
 }
 
@@ -130,6 +148,10 @@ function createLoggingService(service: ILearningStyleDashboardService): ILearnin
         async getSystemStats() {
             console.log('[LearningStyleService] Fetching system stats');
             return service.getSystemStats();
+        },
+        async generateRecommendations(studentId, maxRecommendations) {
+            console.log('[LearningStyleService] Generating recommendations for:', studentId);
+            return service.generateRecommendations(studentId, maxRecommendations);
         },
     };
 }

@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { LoadingState } from '@/components/common/types/LoadingState';
 import type { LearningStyleType, LearningStyleFormData } from '../types';
 import type {
+    HealthCheckResponse,
     ILearningStyleDashboardService,
     LearningStyleSystemStats,
     StruggleTopicData,
@@ -24,11 +25,16 @@ export interface LearningStyleWorkflowState {
     topicFilter: string;
     maxRecommendations: number;
     systemStats: LearningStyleSystemStats | null;
+    systemHealthStatus: HealthCheckResponse['status'] | 'checking';
+    systemHealthMessage: string;
     styleDistribution: Record<LearningStyleType, number>;
     topStruggleTopics: StruggleTopicData[];
     isStudentListOpen: boolean;
     filteredStudents: string[];
-    filteredRecommendations: string[];
+    generatedRecommendations: string[];
+    recommendationsRequested: boolean;
+    isGeneratingRecommendations: boolean;
+    recommendationError: string | null;
 }
 
 export interface LearningStyleWorkflowActions {
@@ -41,6 +47,7 @@ export interface LearningStyleWorkflowActions {
     resetWorkflow: () => void;
     setTopicFilter: (value: string) => void;
     setMaxRecommendations: (value: number) => void;
+    generateRecommendations: () => Promise<void>;
     goToRecommendations: () => void;
 }
 
@@ -80,12 +87,25 @@ export function useLearningStyleWorkflow(service: ILearningStyleDashboardService
         resetWorkflowUi,
     } = store;
 
+    const [systemHealthStatus, setSystemHealthStatus] = useState<HealthCheckResponse['status'] | 'checking'>('checking');
+    const [systemHealthMessage, setSystemHealthMessage] = useState<string>('Checking service status...');
+    const [generatedRecommendations, setGeneratedRecommendations] = useState<string[]>([]);
+    const [recommendationsRequested, setRecommendationsRequested] = useState(false);
+    const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false);
+    const [recommendationError, setRecommendationError] = useState<string | null>(null);
+
     const { handleSubmit, handleReset, loadingState } = useLearningStyleLogic({
         service,
         state,
         enablePersistence: true,
         enableEvents: true,
     });
+
+    const clearGeneratedRecommendations = useCallback(() => {
+        setGeneratedRecommendations([]);
+        setRecommendationsRequested(false);
+        setRecommendationError(null);
+    }, []);
 
     const refreshDashboardMetrics = useCallback(async () => {
         try {
@@ -105,27 +125,27 @@ export function useLearningStyleWorkflow(service: ILearningStyleDashboardService
 
     useEffect(() => {
         const initialize = async () => {
-            await service.checkHealth().catch(() => null);
+            try {
+                const health = await service.checkHealth();
+                setSystemHealthStatus(health.status);
+                setSystemHealthMessage(health.message || `Learning style service is ${health.status}`);
+            } catch {
+                setSystemHealthStatus('down');
+                setSystemHealthMessage('Learning style service is offline');
+            }
+
             await refreshDashboardMetrics();
         };
+
         void initialize();
     }, [service, refreshDashboardMetrics]);
 
     useEffect(() => {
         if (!state.result) return;
         setWorkflowStep(3);
+        clearGeneratedRecommendations();
         void refreshDashboardMetrics();
-    }, [state.result, refreshDashboardMetrics, setWorkflowStep]);
-
-    const filteredRecommendations = useMemo(() => {
-        if (!state.result) return [];
-        const byTopic = topicFilter.trim().length === 0
-            ? state.result.recommendations
-            : state.result.recommendations.filter((rec) =>
-                rec.toLowerCase().includes(topicFilter.toLowerCase())
-            );
-        return byTopic.slice(0, maxRecommendations);
-    }, [state.result, topicFilter, maxRecommendations]);
+    }, [state.result, clearGeneratedRecommendations, refreshDashboardMetrics, setWorkflowStep]);
 
     const filteredStudents = useMemo(() => {
         const query = studentLookup.trim().toLowerCase();
@@ -160,15 +180,51 @@ export function useLearningStyleWorkflow(service: ILearningStyleDashboardService
     }, [service, setIsLoadingProfile, setProfile, setWorkflowStep, state, studentLookup]);
 
     const submitAnalysis = useCallback(async (data: LearningStyleFormData) => {
+        clearGeneratedRecommendations();
         await handleSubmit(data);
         await refreshDashboardMetrics();
         setWorkflowStep(3);
-    }, [handleSubmit, refreshDashboardMetrics, setWorkflowStep]);
+    }, [clearGeneratedRecommendations, handleSubmit, refreshDashboardMetrics, setWorkflowStep]);
+
+    const generateRecommendations = useCallback(async () => {
+        if (!state.result) {
+            setRecommendationError('Run learning style analysis before generating recommendations.');
+            return;
+        }
+
+        const studentId = state.formData.student_id.trim();
+        if (!studentId) {
+            setRecommendationError('Student ID is required to generate recommendations.');
+            return;
+        }
+
+        setRecommendationsRequested(true);
+        setIsGeneratingRecommendations(true);
+        setRecommendationError(null);
+
+        try {
+            const backendRecommendations = await service.generateRecommendations(studentId, maxRecommendations);
+            const topicQuery = topicFilter.trim().toLowerCase();
+            const filtered = topicQuery.length === 0
+                ? backendRecommendations
+                : backendRecommendations.filter((recommendation) => recommendation.toLowerCase().includes(topicQuery));
+
+            setGeneratedRecommendations(filtered);
+            await refreshDashboardMetrics();
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to generate recommendations';
+            setGeneratedRecommendations([]);
+            setRecommendationError(message);
+        } finally {
+            setIsGeneratingRecommendations(false);
+        }
+    }, [state.result, state.formData.student_id, service, maxRecommendations, topicFilter, refreshDashboardMetrics]);
 
     const resetWorkflow = useCallback(() => {
         handleReset();
+        clearGeneratedRecommendations();
         resetWorkflowUi();
-    }, [handleReset, resetWorkflowUi]);
+    }, [clearGeneratedRecommendations, handleReset, resetWorkflowUi]);
 
     const openStudentList = useCallback(() => setStudentListOpen(true), [setStudentListOpen]);
     const closeStudentList = useCallback(() => setStudentListOpen(false), [setStudentListOpen]);
@@ -176,6 +232,17 @@ export function useLearningStyleWorkflow(service: ILearningStyleDashboardService
         setStudentLookup(student);
         setStudentListOpen(false);
     }, [setStudentLookup, setStudentListOpen]);
+
+    const setTopicFilterWithReset = useCallback((value: string) => {
+        setTopicFilter(value);
+        clearGeneratedRecommendations();
+    }, [setTopicFilter, clearGeneratedRecommendations]);
+
+    const setMaxRecommendationsWithReset = useCallback((value: number) => {
+        setMaxRecommendations(value);
+        clearGeneratedRecommendations();
+    }, [setMaxRecommendations, clearGeneratedRecommendations]);
+
     const goToRecommendations = useCallback(() => setWorkflowStep(3), [setWorkflowStep]);
 
     return {
@@ -190,11 +257,16 @@ export function useLearningStyleWorkflow(service: ILearningStyleDashboardService
             topicFilter,
             maxRecommendations,
             systemStats,
+            systemHealthStatus,
+            systemHealthMessage,
             styleDistribution,
             topStruggleTopics,
             isStudentListOpen,
             filteredStudents,
-            filteredRecommendations,
+            generatedRecommendations,
+            recommendationsRequested,
+            isGeneratingRecommendations,
+            recommendationError,
         },
         actions: {
             setStudentLookup,
@@ -204,8 +276,9 @@ export function useLearningStyleWorkflow(service: ILearningStyleDashboardService
             loadStudentProfile,
             submitAnalysis,
             resetWorkflow,
-            setTopicFilter,
-            setMaxRecommendations,
+            setTopicFilter: setTopicFilterWithReset,
+            setMaxRecommendations: setMaxRecommendationsWithReset,
+            generateRecommendations,
             goToRecommendations,
         },
     };

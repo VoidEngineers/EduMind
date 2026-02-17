@@ -13,6 +13,7 @@ import {
     LearningStyleHealthResponseSchema,
     LearningStylePredictionApiSchema,
     LearningStyleRecommendationsApiSchema,
+    type LearningStyleRecommendationApiResponse,
     LearningStyleStudentProfileApiSchema,
     LearningStyleStudentSummaryApiSchema,
     LearningStyleSystemStatsApiSchema,
@@ -24,6 +25,9 @@ const API_BASE_URL = import.meta.env.VITE_LEARNING_STYLE_API_URL || 'http://loca
 const API_V1_PREFIX = '/api/v1';
 
 const STYLE_ORDER: LearningStyleType[] = ['visual', 'auditory', 'reading', 'kinesthetic'];
+const DEFAULT_RECOMMENDATION_COUNT = 5;
+const MIN_RECOMMENDATION_COUNT = 1;
+const MAX_RECOMMENDATION_COUNT = 10;
 
 function normalizeStyleKey(value: string): LearningStyleType | null {
     const normalized = value.trim().toLowerCase();
@@ -94,6 +98,16 @@ function toErrorMessage(detail: unknown): string {
     }
 
     return 'Request failed';
+}
+
+function toRecommendationText(item: LearningStyleRecommendationApiResponse): string {
+    const title = item.resource?.title?.trim();
+    const reason = item.reason?.trim();
+
+    if (title && reason) return `${title}: ${reason}`;
+    if (title) return title;
+    if (reason) return reason;
+    return 'Personalized learning resource';
 }
 
 async function requestJson<T>(
@@ -193,6 +207,30 @@ class LearningStyleApiService implements ILearningStyleDashboardService {
         };
     }
 
+    async generateRecommendations(studentId: string, maxRecommendations = DEFAULT_RECOMMENDATION_COUNT): Promise<string[]> {
+        const safeLimit = Math.min(
+            MAX_RECOMMENDATION_COUNT,
+            Math.max(MIN_RECOMMENDATION_COUNT, Math.floor(maxRecommendations || DEFAULT_RECOMMENDATION_COUNT))
+        );
+
+        const generated = await requestJson(
+            `${this.baseURL}${API_V1_PREFIX}/recommendations/generate`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    student_id: studentId,
+                    max_recommendations: safeLimit,
+                }),
+            },
+            LearningStyleRecommendationsApiSchema
+        );
+
+        return generated.map(toRecommendationText);
+    }
+
     async predictLearningStyle(data: LearningStyleFormData): Promise<LearningStyleResult> {
         if (!data.student_id.trim()) {
             throw new Error('Student ID is required');
@@ -212,43 +250,12 @@ class LearningStyleApiService implements ILearningStyleDashboardService {
         const primaryStyle = mappedPrimaryStyle ?? STYLE_ORDER.sort((a, b) => styleScores[b] - styleScores[a])[0] ?? 'reading';
         const secondaryStyle = toSecondaryStyle(styleScores, primaryStyle);
 
-        let recommendations: string[] = [];
-
-        try {
-            const generated = await requestJson(
-                `${this.baseURL}${API_V1_PREFIX}/recommendations/generate`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        student_id: data.student_id,
-                        max_recommendations: 10,
-                    }),
-                },
-                LearningStyleRecommendationsApiSchema
-            );
-
-            recommendations = generated.map((item) => {
-                const title = item.resource?.title?.trim();
-                const reason = item.reason?.trim();
-
-                if (title && reason) return `${title}: ${reason}`;
-                if (title) return title;
-                if (reason) return reason;
-                return 'Personalized learning resource';
-            });
-        } catch {
-            recommendations = [];
-        }
-
         return {
             primary_style: primaryStyle,
             secondary_style: secondaryStyle,
             style_scores: styleScores,
             confidence: toPercentage(predictionResponse.confidence),
-            recommendations,
+            recommendations: [],
             timestamp: predictionResponse.predicted_at,
         };
     }
