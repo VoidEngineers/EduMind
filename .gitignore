@@ -216,6 +216,9 @@ temp/
 # Keep learning-style predictor source-code data folder tracked
 !apps/web/src/components/Learning-style-predictor/data/
 !apps/web/src/components/Learning-style-predictor/data/**
+# Keep xai predictor source-code data folder tracked
+!apps/web/src/components/xai_predictor/data/
+!apps/web/src/components/xai_predictor/data/**
 
 # Model checkpoints
 **/checkpoints/
