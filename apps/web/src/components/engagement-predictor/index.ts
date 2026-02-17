@@ -6,10 +6,5 @@
 // Main component
 export { EngagementPredictor, default } from './EngagementPredictor';
 
-// Core exports (types, hooks, constants)
+// Core exports
 export * from './core';
-
-// Feature components (if needed for advanced use)
-export { EngagementForm } from './features/prediction-form/EngagementForm';
-export { EngagementResults } from './features/prediction-results/EngagementResults';
-
