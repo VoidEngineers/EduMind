@@ -93,11 +93,26 @@ export interface QuickStudent {
     label: string;
 }
 
+export interface ScheduleSession {
+    sessionNumber: number;
+    durationMinutes: number;
+    taskType: string;
+    suggestedTime: string;
+}
+
+export interface TaskBreakdown {
+    assignmentPrepMinutes: number;
+    quizInteractionMinutes: number;
+    forumEngagementMinutes: number;
+    generalStudyMinutes: number;
+}
+
 export interface ScheduleDay {
     dayName: string;
+    date: string;
     totalMinutes: number;
-    sessions: number;
-    focus: string;
+    sessions: ScheduleSession[];
+    taskBreakdown: TaskBreakdown;
     isLightDay: boolean;
 }
 
@@ -110,6 +125,13 @@ export interface UiSchedule {
     days: ScheduleDay[];
 }
 
+export interface BackendScheduleSession {
+    session_number: number;
+    duration_minutes: number;
+    task_type: string;
+    suggested_time: string;
+}
+
 export interface BackendScheduleResponse {
     session_length_minutes: number;
     sessions_per_day: number;
@@ -117,8 +139,9 @@ export interface BackendScheduleResponse {
     load_reduction_factor: number;
     daily_schedules: Array<{
         day_name: string;
+        date: string;
         total_minutes: number;
-        sessions: Array<unknown>;
+        sessions: BackendScheduleSession[];
         is_light_day: boolean;
         task_breakdown?: {
             assignment_prep_minutes?: number;

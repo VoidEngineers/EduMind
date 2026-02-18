@@ -8,7 +8,7 @@ import {
     getScheduleSummary,
     getStudentDashboard,
 } from '../../../services/engagementDashboardApi';
-import { extractPredictionFactors, mapScheduleFocus } from '../../utils/engagementDashboardMappers';
+import { extractPredictionFactors } from '../../utils/engagementDashboardMappers';
 import type { EngagementDashboardStoreSlice } from './useEngagementDashboardStoreSlice';
 
 interface DashboardActionDeps {
@@ -124,9 +124,20 @@ export function useEngagementDashboardActions({
                 reasoning,
                 days: generatedSchedule.daily_schedules.map((day) => ({
                     dayName: day.day_name,
+                    date: day.date,
                     totalMinutes: day.total_minutes,
-                    sessions: day.sessions.length,
-                    focus: mapScheduleFocus(day.task_breakdown),
+                    sessions: day.sessions.map((session) => ({
+                        sessionNumber: session.session_number,
+                        durationMinutes: session.duration_minutes,
+                        taskType: session.task_type,
+                        suggestedTime: session.suggested_time,
+                    })),
+                    taskBreakdown: {
+                        assignmentPrepMinutes: day.task_breakdown?.assignment_prep_minutes || 0,
+                        quizInteractionMinutes: day.task_breakdown?.quiz_interaction_minutes || 0,
+                        forumEngagementMinutes: day.task_breakdown?.forum_engagement_minutes || 0,
+                        generalStudyMinutes: day.task_breakdown?.general_study_minutes || 0,
+                    },
                     isLightDay: day.is_light_day,
                 })),
             });

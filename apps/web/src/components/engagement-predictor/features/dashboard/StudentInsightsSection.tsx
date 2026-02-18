@@ -67,6 +67,21 @@ function getEngagementLevelLabel(level: string | undefined): string {
     return 'Unknown';
 }
 
+function formatTaskType(taskType: string): string {
+    const types: Record<string, string> = {
+        assignment_prep: '📝 Assignment Prep',
+        quiz_interaction: '🎯 Quiz/Interaction',
+        forum_engagement: '💬 Forum Engagement',
+        general_study: '📚 General Study',
+    };
+    return types[taskType] || taskType;
+}
+
+function formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 export function StudentInsightsSection({
     selectedDashboard,
     engagementSummary,
@@ -315,15 +330,50 @@ export function StudentInsightsSection({
 
                         <div>
                             <h4 className="mb-2 text-sm font-bold text-slate-900 dark:text-slate-100">Weekly Breakdown</h4>
-                            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                                 {schedule.days.map((day) => (
-                                    <div key={day.dayName} className={`rounded-xl border p-3 ${day.isLightDay ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800'}`}>
-                                        <div className="flex items-center justify-between">
-                                            <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{day.dayName}</p>
-                                            {day.isLightDay ? <span className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">Light Day</span> : null}
+                                    <div
+                                        key={day.dayName}
+                                        className={`rounded-xl border p-3 transition-colors ${day.isLightDay ? 'border-amber-200 bg-amber-50 ring-1 ring-amber-200/60 dark:border-amber-700 dark:bg-amber-900/25 dark:ring-amber-500/20' : 'border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800'}`}
+                                    >
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div>
+                                                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{day.dayName}</p>
+                                                <p className="text-xs text-slate-600 dark:text-slate-400">{formatDate(day.date)}</p>
+                                            </div>
+                                            {day.isLightDay ? <span className="text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-500">Light Day</span> : null}
                                         </div>
-                                        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{day.sessions} session(s) • {day.totalMinutes} min</p>
-                                        <p className="mt-2 text-sm font-medium text-slate-800 dark:text-slate-200">Focus: {day.focus}</p>
+                                        <div className="mb-2 text-xs text-slate-600 dark:text-slate-400">
+                                            Total: {day.totalMinutes} minutes
+                                        </div>
+                                        <div className="space-y-2 mb-3">
+                                            {day.sessions.map((session) => (
+                                                <div key={session.sessionNumber} className="rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-600 dark:bg-slate-700">
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Session {session.sessionNumber}</span>
+                                                        <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{session.durationMinutes} min</span>
+                                                    </div>
+                                                    <div className="text-xs text-slate-600 dark:text-slate-400">
+                                                        <div>{formatTaskType(session.taskType)}</div>
+                                                        <div className="text-slate-500 dark:text-slate-500">{session.suggestedTime}</div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="space-y-1 pt-2 border-t border-slate-200 dark:border-slate-700">
+                                            {day.taskBreakdown.assignmentPrepMinutes > 0 && (
+                                                <div className="text-xs text-slate-600 dark:text-slate-400">📝 Assignments: {day.taskBreakdown.assignmentPrepMinutes} min</div>
+                                            )}
+                                            {day.taskBreakdown.quizInteractionMinutes > 0 && (
+                                                <div className="text-xs text-slate-600 dark:text-slate-400">🎯 Quizzes: {day.taskBreakdown.quizInteractionMinutes} min</div>
+                                            )}
+                                            {day.taskBreakdown.forumEngagementMinutes > 0 && (
+                                                <div className="text-xs text-slate-600 dark:text-slate-400">💬 Forum: {day.taskBreakdown.forumEngagementMinutes} min</div>
+                                            )}
+                                            {day.taskBreakdown.generalStudyMinutes > 0 && (
+                                                <div className="text-xs text-slate-600 dark:text-slate-400">📚 General Study: {day.taskBreakdown.generalStudyMinutes} min</div>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
