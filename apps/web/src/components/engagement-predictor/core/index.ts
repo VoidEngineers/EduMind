@@ -3,17 +3,8 @@
  * Exports all core functionality for the engagement predictor
  */
 
-// Types
-export type {
-    EngagementFilters, EngagementFormData, EngagementLevel, EngagementPredictorProps, EngagementResult, EngagementSchema,
-    FormSectionProps, InterventionItem
-} from './types';
-
 // Hooks
-export { useEngagementLogic } from './hooks/useEngagementLogic';
-export {
-    useActiveTab, useEngagementState, useError, useFormData, useInterventions, useIsLoading, useResult
-} from './hooks/useEngagementState';
+export { useEngagementDashboardWorkflow } from './hooks/useEngagementDashboardWorkflow';
 
-// Constants
-export * from './constants';
+// Dashboard Types
+export type * from './types/dashboard';
