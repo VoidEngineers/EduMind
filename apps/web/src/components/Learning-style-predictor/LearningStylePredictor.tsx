@@ -48,46 +48,46 @@ function LearningStylePredictorCore({ service }: LearningStylePredictorCoreProps
                 : 'border-red-300 bg-red-50 text-red-700';
 
     return (
-        <div className="min-h-screen bg-[radial-gradient(circle_at_5%_0%,rgba(99,102,241,0.12),transparent_42%),radial-gradient(circle_at_95%_0%,rgba(14,165,233,0.12),transparent_42%),#f4f6fb] pt-20 text-slate-900">
+        <div className="min-h-screen bg-[radial-gradient(circle_at_5%_0%,rgba(99,102,241,0.12),transparent_42%),radial-gradient(circle_at_95%_0%,rgba(14,165,233,0.12),transparent_42%),bg-background dark:bg-slate-900] pt-20 text-slate-900 dark:text-slate-100">
             <main className="mx-auto max-w-7xl px-4 pb-10 pt-4 sm:px-6 lg:px-8">
                 <section className="mb-4 grid gap-3">
                     <div className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${statusClasses}`}>
                         <span className={`h-2 w-2 rounded-full ${status === 'healthy' ? 'bg-emerald-500' : status === 'degraded' ? 'bg-amber-500' : status === 'checking' ? 'bg-slate-500' : 'bg-red-500'}`} />
                         <span>{statusLabel}</span>
                     </div>
-                    <p className="text-xs text-slate-600">{workflow.view.systemHealthMessage}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-300">{workflow.view.systemHealthMessage}</p>
 
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                        <article className="rounded-xl border border-indigo-200 bg-white p-3 shadow-sm">
-                            <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
+                        <article className="rounded-xl border border-indigo-200 bg-background dark:bg-slate-900 p-3 shadow-sm">
+                            <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200">
                                 <Users size={18} />
                             </div>
-                            <p className="text-xl font-bold text-slate-900">{stats?.totalStudents ?? '--'}</p>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Total Students</p>
+                            <p className="text-xl font-bold text-slate-900 dark:text-slate-100">{stats?.totalStudents ?? '--'}</p>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">Total Students</p>
                         </article>
 
-                        <article className="rounded-xl border border-sky-200 bg-white p-3 shadow-sm">
-                            <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100 text-sky-700">
+                        <article className="rounded-xl border border-sky-200 bg-background dark:bg-slate-900 p-3 shadow-sm">
+                            <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100 text-sky-700 dark:bg-sky-900 dark:text-sky-200">
                                 <Database size={18} />
                             </div>
-                            <p className="text-xl font-bold text-slate-900">{stats?.totalResources ?? '--'}</p>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Resources</p>
+                            <p className="text-xl font-bold text-slate-900 dark:text-slate-100">{stats?.totalResources ?? '--'}</p>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">Resources</p>
                         </article>
 
-                        <article className="rounded-xl border border-violet-200 bg-white p-3 shadow-sm">
-                            <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 text-violet-700">
+                        <article className="rounded-xl border border-violet-200 bg-background dark:bg-slate-900 p-3 shadow-sm">
+                            <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-200">
                                 <BookOpenCheck size={18} />
                             </div>
-                            <p className="text-xl font-bold text-slate-900">{stats?.totalRecommendations ?? '--'}</p>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Recommendations</p>
+                            <p className="text-xl font-bold text-slate-900 dark:text-slate-100">{stats?.totalRecommendations ?? '--'}</p>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">Recommendations</p>
                         </article>
 
-                        <article className="rounded-xl border border-emerald-200 bg-white p-3 shadow-sm">
-                            <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                        <article className="rounded-xl border border-emerald-200 bg-background dark:bg-slate-900 p-3 shadow-sm">
+                            <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-200">
                                 <ChartNoAxesCombined size={18} />
                             </div>
-                            <p className="text-xl font-bold text-slate-900">{formatPercentage(stats?.recommendationCompletionRate)}</p>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Success Rate</p>
+                            <p className="text-xl font-bold text-slate-900 dark:text-slate-100">{formatPercentage(stats?.recommendationCompletionRate)}</p>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">Success Rate</p>
                         </article>
                     </div>
                 </section>

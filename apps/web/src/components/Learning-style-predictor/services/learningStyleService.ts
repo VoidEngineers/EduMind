@@ -134,7 +134,7 @@ class LearningStyleApiService implements ILearningStyleDashboardService {
     constructor(private readonly baseURL: string = API_BASE_URL) {}
 
     async checkHealth(): Promise<HealthCheckResponse> {
-        const payload = await requestJson(`${this.baseURL}/health`, undefined, LearningStyleHealthResponseSchema);
+        const payload = await requestJson(`${this.baseURL}/api/v1/system/health`, undefined, LearningStyleHealthResponseSchema);
 
         const normalizedStatus = payload.status.toLowerCase();
         const status: HealthCheckResponse['status'] = normalizedStatus === 'healthy'

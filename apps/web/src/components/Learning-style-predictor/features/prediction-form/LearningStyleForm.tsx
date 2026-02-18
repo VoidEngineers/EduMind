@@ -35,7 +35,7 @@ function FormFields({
                 <input
                     id="student_id"
                     type="text"
-                    className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                    className="h-11 w-full rounded-xl border border-slate-300 bg-background dark:bg-slate-900 px-3 text-sm text-slate-900 dark:text-slate-100 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                     placeholder="Enter student ID"
                     {...register('student_id')}
                 />
@@ -111,10 +111,10 @@ export function LearningStyleForm({
     }
 
     return (
-        <div className="mx-auto max-w-4xl p-4">
+        <div className="mx-auto max-w-4xl p-4 bg-background dark:bg-slate-900 rounded-xl">
             <div>
-                <h1 className="text-2xl font-bold text-slate-900">Learning Style Predictor</h1>
-                <p className="mt-1 text-sm text-slate-600">Discover your preferred learning style to optimize your study approach.</p>
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Learning Style Predictor</h1>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Discover your preferred learning style to optimize your study approach.</p>
             </div>
             {formContent}
         </div>

@@ -25,20 +25,20 @@ export function RecommendationsStep({
     onGenerateRecommendations,
 }: RecommendationsStepProps) {
     return (
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" id="step3Card">
+        <section className="rounded-2xl border border-slate-200 bg-background dark:bg-slate-900 p-4 shadow-sm" id="step3Card">
             <div className="mb-3">
-                <div className="mb-2 inline-flex rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-semibold text-indigo-700">Step 3</div>
-                <h2 className="text-lg font-bold text-slate-900">Personalized Recommendations</h2>
-                <p className="text-sm text-slate-600">Adjust options, then click the button to generate recommendations from the backend.</p>
+                <div className="mb-2 inline-flex rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200 px-2.5 py-1 text-xs font-semibold">Step 3</div>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Personalized Recommendations</h2>
+                <p className="text-sm text-slate-600 dark:text-slate-300">Adjust options, then click the button to generate recommendations from the backend.</p>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="grid gap-1.5">
-                    <label htmlFor="topicFilter" className="text-xs font-semibold uppercase tracking-wide text-slate-700">Topic (Optional)</label>
+                    <label htmlFor="topicFilter" className="text-xs font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-300">Topic (Optional)</label>
                     <input
                         id="topicFilter"
                         type="text"
-                        className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                        className="h-11 w-full rounded-xl border border-slate-300 bg-background dark:bg-slate-900 px-3 text-sm text-slate-900 dark:text-slate-100 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                         value={topicFilter}
                         onChange={(event) => onTopicFilterChange(event.target.value)}
                         placeholder="e.g., Python Loops, Data Structures"
@@ -46,7 +46,7 @@ export function RecommendationsStep({
                 </div>
 
                 <div className="grid gap-1.5">
-                    <label htmlFor="maxRecommendationsRange" className="text-xs font-semibold uppercase tracking-wide text-slate-700">Number of Recommendations</label>
+                    <label htmlFor="maxRecommendationsRange" className="text-xs font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-300">Number of Recommendations</label>
                     <div className="flex items-center gap-3">
                         <input
                             id="maxRecommendationsRange"
@@ -57,7 +57,7 @@ export function RecommendationsStep({
                             className="h-2 w-full cursor-pointer accent-indigo-600"
                             onChange={(event) => onMaxRecommendationsChange(Number(event.target.value))}
                         />
-                        <span className="inline-flex min-w-8 items-center justify-center rounded-full bg-indigo-100 px-2 py-1 text-xs font-semibold text-indigo-700" id="sliderValue">
+                        <span className="inline-flex min-w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200 px-2 py-1 text-xs font-semibold" id="sliderValue">
                             {maxRecommendations}
                         </span>
                     </div>
@@ -78,8 +78,8 @@ export function RecommendationsStep({
 
             <div id="recommendationsDisplay" className="mt-4">
                 <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <h3 className="text-base font-bold text-slate-900">Your Personalized Resources</h3>
-                    <span className="text-xs font-semibold text-slate-600" id="recommendationsCount">
+                    <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Your Personalized Resources</h3>
+                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300" id="recommendationsCount">
                         {recommendationsRequested ? `${generatedRecommendations.length} resources found` : 'Not generated yet'}
                     </span>
                 </div>
@@ -91,7 +91,7 @@ export function RecommendationsStep({
                 ) : null}
 
                 {!recommendationsRequested ? (
-                    <div className="mt-3 rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm font-medium text-slate-700">
+                    <div className="mt-3 rounded-xl border border-slate-300 bg-slate-50 dark:bg-slate-800 p-3 text-sm font-medium text-slate-700 dark:text-slate-200">
                         Move the slider or set a topic, then click <span className="font-bold">Get Recommendations</span>.
                     </div>
                 ) : null}
@@ -99,16 +99,16 @@ export function RecommendationsStep({
                 {recommendationsRequested && generatedRecommendations.length > 0 ? (
                     <div id="recommendationsList" className="mt-3 grid gap-2">
                         {generatedRecommendations.map((recommendation, index) => (
-                            <article key={`${recommendation}-${index}`} className="flex items-start gap-2 rounded-xl border border-indigo-200 bg-indigo-50/50 p-3">
-                                <span className="inline-grid h-6 w-6 shrink-0 place-items-center rounded-full bg-indigo-600 text-xs font-semibold text-white">{index + 1}</span>
-                                <p className="text-sm leading-relaxed text-slate-800">{recommendation}</p>
+                            <article key={`${recommendation}-${index}`} className="flex items-start gap-2 rounded-xl border border-indigo-200 bg-indigo-50/50 dark:bg-indigo-900/50 p-3">
+                                <span className="inline-grid h-6 w-6 shrink-0 place-items-center rounded-full bg-indigo-600 text-xs font-semibold text-white dark:bg-indigo-400 dark:text-indigo-900">{index + 1}</span>
+                                <p className="text-sm leading-relaxed text-slate-800 dark:text-slate-100">{recommendation}</p>
                             </article>
                         ))}
                     </div>
                 ) : null}
 
                 {recommendationsRequested && generatedRecommendations.length === 0 && !recommendationError ? (
-                    <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm font-medium text-amber-800">
+                    <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-900 p-3 text-sm font-medium text-amber-800 dark:text-amber-200">
                         No recommendations matched the current topic filter.
                     </div>
                 ) : null}
