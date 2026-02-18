@@ -1,33 +1,23 @@
 """Configuration settings for Learning Style Service"""
-from backend.shared.config import BaseServiceSettings
+from pydantic_settings import BaseSettings
 from functools import lru_cache
 
-class Settings(BaseServiceSettings):
+
+class Settings(BaseSettings):
     """Application settings"""
     
     # App Info
-    SERVICE_NAME: str = "learning-style-service"
-    
-    @property
-    def APP_NAME(self) -> str:
-        return self.SERVICE_NAME
-    
-    @property
-    def APP_VERSION(self) -> str:
-        return self.VERSION
+    APP_NAME: str = "EduMind Learning Style Recognition Service"
+    APP_VERSION: str = "1.0.0"
     
     # Database
     DATABASE_URL: str = "postgresql+psycopg://postgres:admin@localhost:5432/edumind_learning_style_venath"
     
     # API Settings
-    @property
-    def API_V1_PREFIX(self) -> str:
-        return self.API_PREFIX
+    API_V1_PREFIX: str = "/api/v1"
     
     # CORS
-    @property
-    def CORS_ORIGINS(self) -> list:
-        return self.ALLOWED_ORIGINS
+    CORS_ORIGINS: list = ["*"]
     
     # Recommendation Settings
     MAX_RECOMMENDATIONS_PER_DAY: int = 5
