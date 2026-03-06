@@ -12,7 +12,8 @@ class Settings(BaseServiceSettings):
     DESCRIPTION: str = "Tracks student engagement and provides intervention recommendations"
     
     # Database (using psycopg3 driver)
-    DATABASE_URL: str = "postgresql+psycopg://postgres:admin@localhost:5432/edumind_venath"
+    # Default to local Postgres running under the current macOS user
+    DATABASE_URL: str = "postgresql+psycopg://postgres:admin@localhost:5432/edumind"
     
     # API Configuration
     @property

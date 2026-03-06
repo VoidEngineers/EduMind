@@ -14,7 +14,7 @@ load_dotenv()
 # Using postgresql+psycopg dialect for psycopg3
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql+psycopg://postgres:admin@localhost:5432/edumind_venath"
+    "postgresql+psycopg://postgres:admin@localhost:5432/edumind"
 )
 
 # Create SQLAlchemy engine
