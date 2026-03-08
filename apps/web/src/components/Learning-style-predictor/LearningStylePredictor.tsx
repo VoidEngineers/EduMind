@@ -42,14 +42,20 @@ function LearningStylePredictorCore({ service }: LearningStylePredictorCoreProps
         if (autoSelected.current) return;
 
         // URL param from overview takes priority (admin clicking a student)
-        const targetId = urlStudentId ?? (isStudent ? user?.id : undefined);
-        if (targetId) {
+        if (urlStudentId) {
             autoSelected.current = true;
-            workflow.actions.setStudentLookup(targetId);
+            workflow.actions.setStudentLookup(urlStudentId);
+            // Don't auto-load profile for admin/url-based navigation
+            return;
+        }
+
+        // Auto-load for student user
+        if (isStudent && user?.id) {
+            autoSelected.current = true;
+            workflow.actions.setStudentLookup(user.id);
             void workflow.actions.loadStudentProfile();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [urlStudentId, isStudent, user?.id]);
+    }, [urlStudentId, isStudent, user?.id, workflow.actions]);
 
     const status = workflow.view.systemHealthStatus;
     const stats = workflow.view.systemStats;
