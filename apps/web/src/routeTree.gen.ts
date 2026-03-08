@@ -15,6 +15,7 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LmsRouteImport } from './routes/lms'
 import { Route as LearningStyleOverviewRouteImport } from './routes/learning-style-overview'
 import { Route as LearningStyleRouteImport } from './routes/learning-style'
+import { Route as Engagement_overviewUserRouteImport } from './routes/engagement_overviewUser'
 import { Route as EngagementOverviewRouteImport } from './routes/engagement-overview'
 import { Route as EngagementRouteImport } from './routes/engagement'
 import { Route as DocsRouteImport } from './routes/docs'
@@ -58,6 +59,13 @@ const LearningStyleRoute = LearningStyleRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any).lazy(() =>
   import('./routes/learning-style.lazy').then((d) => d.Route),
+)
+const Engagement_overviewUserRoute = Engagement_overviewUserRouteImport.update({
+  id: '/engagement_overviewUser',
+  path: '/engagement_overviewUser',
+  getParentRoute: () => rootRouteImport,
+} as any).lazy(() =>
+  import('./routes/engagement_overviewUser.lazy').then((d) => d.Route),
 )
 const EngagementOverviewRoute = EngagementOverviewRouteImport.update({
   id: '/engagement-overview',
@@ -105,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/docs': typeof DocsRoute
   '/engagement': typeof EngagementRoute
   '/engagement-overview': typeof EngagementOverviewRoute
+  '/engagement_overviewUser': typeof Engagement_overviewUserRoute
   '/learning-style': typeof LearningStyleRoute
   '/learning-style-overview': typeof LearningStyleOverviewRoute
   '/lms': typeof LmsRoute
@@ -120,6 +129,7 @@ export interface FileRoutesByTo {
   '/docs': typeof DocsRoute
   '/engagement': typeof EngagementRoute
   '/engagement-overview': typeof EngagementOverviewRoute
+  '/engagement_overviewUser': typeof Engagement_overviewUserRoute
   '/learning-style': typeof LearningStyleRoute
   '/learning-style-overview': typeof LearningStyleOverviewRoute
   '/lms': typeof LmsRoute
@@ -136,6 +146,7 @@ export interface FileRoutesById {
   '/docs': typeof DocsRoute
   '/engagement': typeof EngagementRoute
   '/engagement-overview': typeof EngagementOverviewRoute
+  '/engagement_overviewUser': typeof Engagement_overviewUserRoute
   '/learning-style': typeof LearningStyleRoute
   '/learning-style-overview': typeof LearningStyleOverviewRoute
   '/lms': typeof LmsRoute
@@ -153,6 +164,7 @@ export interface FileRouteTypes {
     | '/docs'
     | '/engagement'
     | '/engagement-overview'
+    | '/engagement_overviewUser'
     | '/learning-style'
     | '/learning-style-overview'
     | '/lms'
@@ -168,6 +180,7 @@ export interface FileRouteTypes {
     | '/docs'
     | '/engagement'
     | '/engagement-overview'
+    | '/engagement_overviewUser'
     | '/learning-style'
     | '/learning-style-overview'
     | '/lms'
@@ -183,6 +196,7 @@ export interface FileRouteTypes {
     | '/docs'
     | '/engagement'
     | '/engagement-overview'
+    | '/engagement_overviewUser'
     | '/learning-style'
     | '/learning-style-overview'
     | '/lms'
@@ -199,6 +213,7 @@ export interface RootRouteChildren {
   DocsRoute: typeof DocsRoute
   EngagementRoute: typeof EngagementRoute
   EngagementOverviewRoute: typeof EngagementOverviewRoute
+  Engagement_overviewUserRoute: typeof Engagement_overviewUserRoute
   LearningStyleRoute: typeof LearningStyleRoute
   LearningStyleOverviewRoute: typeof LearningStyleOverviewRoute
   LmsRoute: typeof LmsRoute
@@ -249,6 +264,13 @@ declare module '@tanstack/react-router' {
       path: '/learning-style'
       fullPath: '/learning-style'
       preLoaderRoute: typeof LearningStyleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/engagement_overviewUser': {
+      id: '/engagement_overviewUser'
+      path: '/engagement_overviewUser'
+      fullPath: '/engagement_overviewUser'
+      preLoaderRoute: typeof Engagement_overviewUserRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/engagement-overview': {
@@ -311,6 +333,7 @@ const rootRouteChildren: RootRouteChildren = {
   DocsRoute: DocsRoute,
   EngagementRoute: EngagementRoute,
   EngagementOverviewRoute: EngagementOverviewRoute,
+  Engagement_overviewUserRoute: Engagement_overviewUserRoute,
   LearningStyleRoute: LearningStyleRoute,
   LearningStyleOverviewRoute: LearningStyleOverviewRoute,
   LmsRoute: LmsRoute,
