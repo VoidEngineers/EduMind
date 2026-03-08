@@ -22,7 +22,7 @@ export function EngagementPredictor() {
         if (urlStudentId && !autoLoaded.current) {
             autoLoaded.current = true;
             actions.setStudentInput(urlStudentId);
-            void actions.loadStudentDashboard(urlStudentId);
+            //void actions.loadStudentDashboard(urlStudentId);             // no longer auto-load the dashboard here to show the lookup section first
             return;
         }
         // Auto-load student's own dashboard when they arrive as a student user
