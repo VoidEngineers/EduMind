@@ -142,7 +142,7 @@ export function Navbar() {
                                 </div>
                             ) : (
                                 <Button
-                                    onClick={() => navigate({ to: '/user-signin' })}
+                                    onClick={() => navigate({ to: '/admin-signin' })}
                                     className="rounded-full px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
                                 >
                                     Sign In

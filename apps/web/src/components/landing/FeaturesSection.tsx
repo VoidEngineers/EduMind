@@ -110,7 +110,7 @@ export function FeaturesSection() {
                             description="Real-time behavioral analytics track student engagement levels, identifying disengagement patterns before they impact performance."
                             gradient="from-green-500 to-teal-600"
                             stats="Real-time Tracking"
-                            route="/engagement-overview"
+                            route="/engagement_overviewUser"
                         />
 
                         <FeatureCard
