@@ -16,6 +16,7 @@ from app.schemas.student_lookup import (
     ConnectedStudentSearchResponse,
     ConnectedStudentSummary,
 )
+from app.services.academic_risk_service import academic_risk_service
 
 
 @dataclass
@@ -146,13 +147,49 @@ class XAIFeatureSyncService:
         else:
             matches.sort(key=lambda student: student.student_id)
 
+        top_matches = matches[:limit]
+        if top_matches:
+            top_matches = await self._apply_xai_risk_preview(top_matches)
+
         return ConnectedStudentSearchResponse(
             query=query,
             total=len(matches),
             limit=limit,
             institute_id=institute_id,
-            students=matches[:limit],
+            students=top_matches,
         )
+
+    async def _apply_xai_risk_preview(
+        self, students: list[ConnectedStudentSummary]
+    ) -> list[ConnectedStudentSummary]:
+        preview_tasks = [
+            self._build_student_preview(student.student_id)
+            for student in students
+        ]
+        preview_results = await asyncio.gather(*preview_tasks, return_exceptions=True)
+
+        enriched_students: list[ConnectedStudentSummary] = []
+        for student, preview in zip(students, preview_results, strict=False):
+            if isinstance(preview, tuple):
+                risk_level, risk_probability = preview
+                enriched_students.append(
+                    student.model_copy(
+                        update={
+                            "risk_level": risk_level,
+                            "risk_probability": risk_probability,
+                        }
+                    )
+                )
+                continue
+
+            enriched_students.append(student)
+
+        return enriched_students
+
+    async def _build_student_preview(self, student_id: str) -> tuple[str, float]:
+        request = await self.build_academic_risk_request(student_id=student_id, days=14)
+        prediction = await academic_risk_service.predict(request)
+        return prediction.risk_level, prediction.risk_score
 
     async def _fetch_upstream_data(
         self, student_id: str, days: int

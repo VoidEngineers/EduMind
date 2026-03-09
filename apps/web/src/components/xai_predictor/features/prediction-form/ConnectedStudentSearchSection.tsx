@@ -6,7 +6,11 @@ import { Brain, Loader2, Search, Wand2 } from 'lucide-react';
 import { KeyboardEvent } from 'react';
 import { useFormContext } from 'react-hook-form';
 import type { StudentRiskRequest } from '../../core/services/xaiService';
-import { getEngagementBadgeClass, getRiskBadgeClass } from './statusStyles';
+import {
+    formatRiskBadgeLabel,
+    getEngagementBadgeClass,
+    getRiskBadgeClass,
+} from './statusStyles';
 import { useConnectedStudentSearch } from './useConnectedStudentSearch';
 
 type ConnectedStudentSearchSectionProps = {
@@ -177,7 +181,7 @@ export function ConnectedStudentSearchSection({
                                             variant="outline"
                                             className={getRiskBadgeClass(student.risk_level)}
                                         >
-                                            {student.risk_level} risk
+                                            {formatRiskBadgeLabel(student.risk_level)}
                                         </Badge>
                                     </div>
                                     <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-400">
