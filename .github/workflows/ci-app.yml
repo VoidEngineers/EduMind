@@ -4,11 +4,14 @@ on:
   pull_request:
     branches: [main, develop]
   push:
-    branches: [main, develop]
+    branches:
+      [main, develop, devops/implementing-the-ci-pipeline-for-models-deployment]
 
 jobs:
   validate:
     runs-on: ubuntu-latest
+    outputs:
+      validation_result: ${{ steps.validation_status.outcome }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -47,5 +50,37 @@ jobs:
         continue-on-error: true
 
       - name: PR status check
+        id: validation_status
+        continue-on-error: true
         if: github.event_name == 'pull_request'
         run: echo "PR validation complete."
+
+  logging:
+    runs-on: ubuntu-latest
+    needs: validate
+    if: always()
+    steps:
+      - name: Send execution start separator to Loki
+        uses: skroutz/action-send-logs-to-loki@v0.0.3
+        with:
+          loki_endpoint: "https://${{ secrets.GRAFANA_LOKI_USER_CLOUD }}:${{ secrets.GRAFANA_LOKI_TKN_CLOUD }}@logs-prod-028.grafana.net"
+          github_token: ${{ secrets.PERSONAL_GITHUB_TOKEN_VIKUM }}
+          labels: "service_name=edumind-ci-validation,repo=EduMind,project=last-year-research,status=separator,workflow=${{ github.workflow }},run_id=${{ github.run_id }},commit_sha=${{ github.sha }},actor=${{ github.actor }},branch=${{ github.ref_name }}"
+          message_to_loki: "\n\n═══════════════════════════════════════════════════════════════\nNEW EXECUTION STARTED\n═══════════════════════════════════════════════════════════════\nRun ID: ${{ github.run_id }}\nCommit: ${{ github.sha }}\nActor: ${{ github.actor }}\nBranch: ${{ github.ref_name }}\nTimestamp: ${{ github.event.head_commit.timestamp }}\n═══════════════════════════════════════════════════════════════\n\n"
+
+      - name: Send detailed failure logs to Loki
+        if: needs.validate.result == 'failure'
+        uses: skroutz/action-send-logs-to-loki@v0.0.3
+        with:
+          loki_endpoint: "https://${{ secrets.GRAFANA_LOKI_USER_CLOUD }}:${{ secrets.GRAFANA_LOKI_TKN_CLOUD }}@logs-prod-028.grafana.net"
+          github_token: ${{ secrets.PERSONAL_GITHUB_TOKEN_VIKUM }}
+          labels: "service_name=edumind-ci-validation,repo=EduMind,project=last-year-research,status=failure,workflow=${{ github.workflow }},run_id=${{ github.run_id }},commit_sha=${{ github.sha }},actor=${{ github.actor }},branch=${{ github.ref_name }}"
+
+      - name: Send success message to Loki
+        if: needs.validate.result == 'success'
+        uses: skroutz/action-send-logs-to-loki@v0.0.3
+        with:
+          loki_endpoint: "https://${{ secrets.GRAFANA_LOKI_USER_CLOUD }}:${{ secrets.GRAFANA_LOKI_TKN_CLOUD }}@logs-prod-028.grafana.net"
+          github_token: ${{ secrets.PERSONAL_GITHUB_TOKEN_VIKUM }}
+          labels: "service_name=edumind-ci-validation,repo=EduMind,project=last-year-research,status=success,workflow=${{ github.workflow }},run_id=${{ github.run_id }},commit_sha=${{ github.sha }},actor=${{ github.actor }},branch=${{ github.ref_name }}"
+          message_to_loki: "CI Validation completed successfully | Commit: ${{ github.sha }} | Actor: ${{ github.actor }} | Branch: ${{ github.ref_name }}"
