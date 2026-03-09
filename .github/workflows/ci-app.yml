@@ -42,8 +42,7 @@ jobs:
 
       - name: Unit tests (pytest)
         id: pytest_check
-        # run: pytest || echo "::warning::Some tests failed or no tests found"
-        run: pytet || echo "::warning::Some tests failed or no tests found"
+        run: pytest || echo "::warning::Some tests failed or no tests found"
         continue-on-error: true
 
       - name: Security scan (Safety)
