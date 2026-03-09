@@ -3,6 +3,9 @@ from pathlib import Path
 from typing import Optional
 import os
 
+SERVICE_ENV_FILE = Path(__file__).resolve().parent.parent.parent / ".env"
+
+
 class Settings(BaseServiceSettings):
     # Service Overrides
     SERVICE_NAME: str = "XAI Prediction Service"
@@ -61,8 +64,8 @@ class Settings(BaseServiceSettings):
         return self.ML_MODELS_DIR / "model_metadata_best.joblib"
 
     # Database & Redis
-    # Falls back to local postgres when DATABASE_URL is missing/blank.
-    DATABASE_URL: str = "postgresql+psycopg://postgres:admin@localhost:5432/edumind"
+    # Falls back to a dedicated XAI database when DATABASE_URL is missing/blank.
+    DATABASE_URL: str = "postgresql+psycopg://postgres:admin@localhost:5432/xai-prediction"
     TEMP_STUDENTS_DATABASE_URL: Optional[str] = None
     REDIS_URL: Optional[str] = None
 
@@ -72,7 +75,7 @@ class Settings(BaseServiceSettings):
     SYNC_TIMEOUT_SECONDS: float = 10.0
 
     class Config:
-        env_file = ".env"
+        env_file = str(SERVICE_ENV_FILE)
         case_sensitive = True
 
 
