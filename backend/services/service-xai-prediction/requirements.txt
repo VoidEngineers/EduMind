@@ -7,6 +7,10 @@ python-multipart==0.0.6
 pydantic==2.5.0
 pydantic-settings==2.1.0
 
+# Database
+sqlalchemy>=2.0.36
+psycopg[binary]>=3.1.0
+
 # ML Dependencies - Updated versions for compatibility
 numpy>=1.26.0,<2.0.0  # Updated for TensorFlow 2.20.0
 pandas==2.0.3
@@ -26,9 +30,6 @@ pytest==7.4.3
 pytest-asyncio==0.21.1
 pytest-cov==4.1.0
 httpx==0.25.2  # Pinned for TestClient compatibility with starlette
-
-# Messaging
-aio-pika==9.4.0
 
 # Development tools (optional)
 black==23.12.0

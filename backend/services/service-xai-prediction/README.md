@@ -13,6 +13,7 @@ This service provides machine learning-based predictions for student academic ou
 - **Feature Importance Analysis**: Identifies and ranks key factors influencing predictions
 - **Risk Assessment**: Categorizes students by risk level (Low, Medium, High, Critical)
 - **Natural Language Explanations**: Generates human-readable prediction explanations
+- **Predictive Bridge Sync**: Pulls engagement + learning-style data and predicts directly
 - **RESTful API**: Fast async API with automatic OpenAPI documentation
 
 ## Technology Stack
@@ -107,6 +108,14 @@ docker run -p 8000:8000 \
 - Make prediction with explainable AI
 - Request Body: `PredictionRequest` (student_id, features dictionary)
 - Response: `PredictionResponse` (prediction result with explanation)
+
+#### POST /api/v1/sync/predict/{student_id}
+
+- Pulls student features from:
+  - Engagement Tracker (`/api/v1/engagement/students/{student_id}/latest` + `/metrics`)
+  - Learning Style (`/api/v1/students/{student_id}`)
+- Maps those values into `PredictionRequest`
+- Runs local XAI model and returns `PredictionResponse`
 
 #### POST /api/v1/academic-risk/predict
 
@@ -240,6 +249,11 @@ PORT=8000
 
 # ML Models Path (optional - auto-detected if not set)
 ML_MODELS_PATH=/path/to/models
+
+# Predictive bridge upstream services
+ENGAGEMENT_SERVICE_URL=http://localhost:8005
+LEARNING_STYLE_SERVICE_URL=http://localhost:8006
+SYNC_TIMEOUT_SECONDS=10
 
 # Database (optional)
 DATABASE_URL=

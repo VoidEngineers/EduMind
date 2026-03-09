@@ -17,6 +17,14 @@ from contextlib import asynccontextmanager
 
 from app.api import routes
 from app.core.config import settings
+from app.core.database import (
+    Base,
+    TempStudentsBase,
+    engine,
+    ensure_database_exists,
+    ensure_temp_students_database_exists,
+    temp_students_engine,
+)
 from app.core.logging import get_logger, setup_logging
 from app.core.middleware import (
     error_handler_middleware,
@@ -33,6 +41,9 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 setup_logging()
 logger = get_logger(__name__)
 
+# Ensure SQLAlchemy models are registered before table initialization.
+from app import models as _models  # noqa: F401
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -41,14 +52,16 @@ async def lifespan(app: FastAPI):
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"API Prefix: {settings.API_PREFIX}")
 
-    # Connect to RabbitMQ
-    from backend.shared.messaging import get_broker
-    broker = get_broker(settings.RABBITMQ_URL)
     try:
-        await broker.connect(client_name=settings.SERVICE_NAME)
-        logger.info(f"Connected to RabbitMQ as {settings.SERVICE_NAME}")
+        database_name = ensure_database_exists()
+        temp_database_name = ensure_temp_students_database_exists()
+        logger.info(f"Prediction database ready: {database_name}")
+        logger.info(f"Temporary students database ready: {temp_database_name}")
+        Base.metadata.create_all(bind=engine)
+        TempStudentsBase.metadata.create_all(bind=temp_students_engine)
+        logger.info("Database tables initialized for XAI service")
     except Exception as e:
-        logger.error(f"Could not connect to RabbitMQ: {e}")
+        logger.warning(f"Database initialization skipped: {e}")
 
     # Verify model loading
     try:
@@ -66,10 +79,6 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # Shutdown: Close RabbitMQ connection
-    from backend.shared.messaging import get_broker
-    broker = get_broker(settings.RABBITMQ_URL)
-    await broker.close()
     logger.info(f"Shutting down {settings.SERVICE_NAME}")
 
 
@@ -112,29 +121,13 @@ app.include_router(academic_risk_routes.router, prefix=settings.API_PREFIX)
 @app.get("/health", tags=["health"])
 async def health_check():
     from app.services.ml_service import ml_service
-    from backend.shared.messaging import get_broker
 
-    health = {
+    return {
         "status": "healthy",
         "service": settings.SERVICE_NAME,
         "version": settings.VERSION,
         "model_loaded": ml_service.model is not None,
-        "components": {},
     }
-
-    # Check RabbitMQ
-    try:
-        broker = get_broker(settings.RABBITMQ_URL)
-        if broker.connection and not broker.connection.is_closed:
-            health["components"]["rabbitmq"] = "connected"
-        else:
-            health["components"]["rabbitmq"] = "disconnected"
-            health["status"] = "degraded"
-    except Exception:
-        health["components"]["rabbitmq"] = "error"
-        health["status"] = "degraded"
-
-    return health
 
 
 @app.get("/")

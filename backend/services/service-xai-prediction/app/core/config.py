@@ -61,8 +61,15 @@ class Settings(BaseServiceSettings):
         return self.ML_MODELS_DIR / "model_metadata_best.joblib"
 
     # Database & Redis
-    DATABASE_URL: Optional[str] = None
+    # Falls back to local postgres when DATABASE_URL is missing/blank.
+    DATABASE_URL: str = "postgresql+psycopg://postgres:admin@localhost:5432/edumind"
+    TEMP_STUDENTS_DATABASE_URL: Optional[str] = None
     REDIS_URL: Optional[str] = None
+
+    # Predictive bridge upstream services
+    ENGAGEMENT_SERVICE_URL: str = "http://localhost:8005"
+    LEARNING_STYLE_SERVICE_URL: str = "http://localhost:8006"
+    SYNC_TIMEOUT_SECONDS: float = 10.0
 
     class Config:
         env_file = ".env"
