@@ -98,3 +98,33 @@ class AcademicRiskResponse(BaseModel):
     )
     prediction_id: UUID = Field(default_factory=uuid4)
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+class TemporaryStudentSummary(BaseModel):
+    """Summary view for saved temporary-student records."""
+
+    student_id: str
+    avg_grade: float
+    latest_risk_level: Optional[str] = None
+    latest_risk_score: Optional[float] = None
+    latest_confidence: Optional[float] = None
+    updated_at: Optional[datetime] = None
+
+
+class TemporaryStudentListResponse(BaseModel):
+    """Paginated list of saved temporary-student records."""
+
+    query: str
+    total: int
+    limit: int
+    students: List[TemporaryStudentSummary]
+
+
+class TemporaryStudentRecordResponse(BaseModel):
+    """Detailed saved temporary-student record with prediction payload."""
+
+    student_id: str
+    request_payload: AcademicRiskRequest
+    prediction: Optional[AcademicRiskResponse] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None

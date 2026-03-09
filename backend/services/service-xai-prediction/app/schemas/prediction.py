@@ -26,6 +26,7 @@ class PredictionRequest(BaseModel):
                 "days_inactive": 3,
                 "completion_rate": 0.65,
                 "assessment_score": 72.5,
+                "learning_style": "Visual",
             }
         }
     )
@@ -50,6 +51,9 @@ class PredictionRequest(BaseModel):
     )
     assessment_score: float = Field(
         default=50.0, ge=0, le=100, description="Average assessment score"
+    )
+    learning_style: Optional[str] = Field(
+        default=None, description="Learning style inferred by Learning Style service"
     )
 
 

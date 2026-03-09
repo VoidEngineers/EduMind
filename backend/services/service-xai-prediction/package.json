@@ -5,6 +5,7 @@
     "scripts": {
         "dev": "uvicorn app.main:app --reload --host 0.0.0.0 --port 8004",
         "start": "uvicorn app.main:app --host 0.0.0.0 --port 8004",
+        "db:init": "python scripts/init_db.py",
         "test": "pytest tests/ -v",
         "test:cov": "pytest tests/ --cov=app --cov-report=html --cov-report=term",
         "lint": "pylint app/",

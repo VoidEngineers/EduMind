@@ -12,6 +12,7 @@ from .prediction import (
     PredictionResponse,
     PredictionResult,
 )
+from .student_lookup import ConnectedStudentSearchResponse, ConnectedStudentSummary
 
 __all__ = [
     "HealthResponse",
@@ -23,4 +24,6 @@ __all__ = [
     "PredictionResult",
     "ExplanationResult",
     "FeatureContribution",
+    "ConnectedStudentSummary",
+    "ConnectedStudentSearchResponse",
 ]
