@@ -9,7 +9,7 @@ COPY src/ src/
 COPY scripts/ scripts/
 COPY config/ config/
 COPY artifacts/ artifacts/
-COPY data/ data/
+# COPY data/ data/
 RUN pip install --upgrade pip && pip install .[dev]
 
 # Set environment variables if needed
