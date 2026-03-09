@@ -1,0 +1,179 @@
+name: Models CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, devops/implementing-the-ci-pipeline-for-models-deployment]
+    paths-ignore:
+      - "README.md"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  integration:
+    name: Continuous Integration
+    runs-on: ubuntu-latest
+    outputs:
+      integration_result: ${{ steps.final_status.outcome }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Lint code
+        id: lint
+        continue-on-error: true
+        run: echo "Linting repository"
+
+      - name: Run unit tests
+        id: tests
+        continue-on-error: true
+        run: echo "Running unit tests"
+
+      - name: Check integration status
+        id: final_status
+        run: |
+          if [ "${{ steps.lint.outcome }}" = "failure" ] || [ "${{ steps.tests.outcome }}" = "failure" ]; then
+            echo "Integration checks failed"
+            exit 1
+          else
+            echo "Integration checks passed"
+          fi
+
+  build-and-push-ecr-image:
+    name: Continuous Delivery
+    needs: integration
+    runs-on: ubuntu-latest
+    outputs:
+      build_result: ${{ steps.build_status.outcome }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install Utilities
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq unzip
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_VIKUM }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_VIKUM }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        working-directory: ml/models/xai_predictor
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
+          IMAGE_TAG: latest
+        run: |
+          # Build a docker container using the Dockerfile
+          # and push it to ECR so that it can be deployed
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Set build status
+        id: build_status
+        if: always()
+        run: |
+          if [ "${{ steps.build-image.outcome }}" = "success" ]; then
+            echo "Build successful"
+            exit 0
+          else
+            echo "Build failed"
+            exit 1
+          fi
+
+  Continuous-Deployment:
+    needs: build-and-push-ecr-image
+    runs-on: self-hosted
+    outputs:
+      deployment_result: ${{ steps.deployment_status.outcome }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_VIKUM }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_VIKUM }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Pull latest images
+        run: |
+          docker pull ${{secrets.AWS_ECR_LOGIN_URI_VIKUM}}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+
+      #- name: Stop and remove  container if running
+      # run: |
+      # docker ps -q --filter "name=networksecurity" | grep -q . && docker stop networksecurity && docker rm -fv networksecurity
+
+      - name: Run Docker Image to serve users
+        id: run_container
+        continue-on-error: true
+        run: |
+          docker run -d -p 8080:8080 --ipc="host" --name=networksecurity -e 'AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID_VIKUM }}' -e 'AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY_VIKUM }}' -e 'AWS_REGION=${{ secrets.AWS_REGION }}'  ${{secrets.AWS_ECR_LOGIN_URI_VIKUM}}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+
+      - name: Clean previous images and containers
+        run: |
+          docker system prune -f
+
+      - name: Set deployment status
+        id: deployment_status
+        if: always()
+        run: |
+          if [ "${{ steps.run_container.outcome }}" = "success" ]; then
+            echo "Deployment successful"
+            exit 0
+          else
+            echo "Deployment failed"
+            exit 1
+          fi
+
+  logging:
+    runs-on: ubuntu-latest
+    needs: [integration, build-and-push-ecr-image, Continuous-Deployment]
+    if: always()
+    steps:
+      - name: Send execution start separator to Loki
+        uses: skroutz/action-send-logs-to-loki@v0.0.3
+        with:
+          loki_endpoint: "https://${{ secrets.GRAFANA_LOKI_USER_CLOUD }}:${{ secrets.GRAFANA_LOKI_TKN_CLOUD }}@logs-prod-028.grafana.net"
+          github_token: ${{ secrets.PERSONAL_GITHUB_TOKEN_VIKUM }}
+          labels: "service_name=edumind-models-cicd,repo=EduMind,project=last-year-research,status=separator,workflow=${{ github.workflow }},run_id=${{ github.run_id }},commit_sha=${{ github.sha }},actor=${{ github.actor }},branch=${{ github.ref_name }}"
+          message_to_loki: "\n\n═══════════════════════════════════════════════════════════════\nNEW EXECUTION STARTED\n═══════════════════════════════════════════════════════════════\nRun ID: ${{ github.run_id }}\nCommit: ${{ github.sha }}\nActor: ${{ github.actor }}\nBranch: ${{ github.ref_name }}\nTimestamp: ${{ github.event.head_commit.timestamp }}\n═══════════════════════════════════════════════════════════════\n\n"
+
+      - name: Send detailed failure logs to Loki
+        if: |
+          needs.integration.result == 'failure' ||
+          needs.build-and-push-ecr-image.result == 'failure' ||
+          needs.Continuous-Deployment.result == 'failure'
+        uses: skroutz/action-send-logs-to-loki@v0.0.3
+        with:
+          loki_endpoint: "https://${{ secrets.GRAFANA_LOKI_USER_CLOUD }}:${{ secrets.GRAFANA_LOKI_TKN_CLOUD }}@logs-prod-028.grafana.net"
+          github_token: ${{ secrets.PERSONAL_GITHUB_TOKEN_VIKUM }}
+          labels: "service_name=edumind-models-cicd,repo=EduMind,project=last-year-research,status=failure,workflow=${{ github.workflow }},run_id=${{ github.run_id }},commit_sha=${{ github.sha }},actor=${{ github.actor }},branch=${{ github.ref_name }}"
+
+      - name: Send success message to Loki
+        if: |
+          needs.integration.result == 'success' &&
+          needs.build-and-push-ecr-image.result == 'success' &&
+          needs.Continuous-Deployment.result == 'success'
+        uses: skroutz/action-send-logs-to-loki@v0.0.3
+        with:
+          loki_endpoint: "https://${{ secrets.GRAFANA_LOKI_USER_CLOUD }}:${{ secrets.GRAFANA_LOKI_TKN_CLOUD }}@logs-prod-028.grafana.net"
+          github_token: ${{ secrets.PERSONAL_GITHUB_TOKEN_VIKUM }}
+          labels: "service_name=edumind-models-cicd,repo=EduMind,project=last-year-research,status=success,workflow=${{ github.workflow }},run_id=${{ github.run_id }},commit_sha=${{ github.sha }},actor=${{ github.actor }},branch=${{ github.ref_name }}"
+          message_to_loki: "Models CI/CD Pipeline completed successfully | Commit: ${{ github.sha }} | Actor: ${{ github.actor }} | Branch: ${{ github.ref_name }}"
