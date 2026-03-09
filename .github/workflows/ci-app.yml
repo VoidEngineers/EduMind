@@ -87,7 +87,7 @@ jobs:
           message_to_loki: "\n\n═══════════════════════════════════════════════════════════════\nNEW EXECUTION STARTED\n═══════════════════════════════════════════════════════════════\nRun ID: ${{ github.run_id }}\nCommit: ${{ github.sha }}\nActor: ${{ github.actor }}\nBranch: ${{ github.ref_name }}\nTimestamp: ${{ github.event.head_commit.timestamp }}\n═══════════════════════════════════════════════════════════════\n\n"
 
       - name: Send detailed failure logs to Loki
-        if: needs.validate.result.output.validation_result == 'failure'
+        if: needs.validate.result == 'failure'
         uses: skroutz/action-send-logs-to-loki@v0.0.3
         with:
           loki_endpoint: "https://${{ secrets.GRAFANA_LOKI_USER_CLOUD }}:${{ secrets.GRAFANA_LOKI_TKN_CLOUD }}@logs-prod-028.grafana.net"
@@ -95,7 +95,7 @@ jobs:
           labels: "service_name=edumind-ci-validation,repo=EduMind,project=last-year-research,status=failure,workflow=${{ github.workflow }},run_id=${{ github.run_id }},commit_sha=${{ github.sha }},actor=${{ github.actor }},branch=${{ github.ref_name }}"
 
       - name: Send success message to Loki
-        if: needs.validate.result.output.validation_result == 'success'
+        if: needs.validate.result == 'success'
         uses: skroutz/action-send-logs-to-loki@v0.0.3
         with:
           loki_endpoint: "https://${{ secrets.GRAFANA_LOKI_USER_CLOUD }}:${{ secrets.GRAFANA_LOKI_TKN_CLOUD }}@logs-prod-028.grafana.net"
