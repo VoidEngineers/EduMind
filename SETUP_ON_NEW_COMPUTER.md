@@ -131,7 +131,7 @@ Do this **once** on the new computer (or after resetting the DBs).
 
 ```powershell
 cd C:\Projects\edumind\EduMind\backend\services\service-engagement-tracker
-venv\Scripts\activate
+venv\Scripts\activate / source .venv/bin/activate
 python scripts/init_db.py
 ```
 
