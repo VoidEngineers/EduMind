@@ -1,96 +1,81 @@
-"""GitHub service for creating pull requests."""
+"""GitHub service for creating issues and managing alerts."""
 
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 import requests
-from git import Repo
 
 from app.config import Config
-from app.models import PullRequestResult
+from app.models import GitHubIssueResult
 
 logger = logging.getLogger(__name__)
 
 
 class GitHubService:
-    """Service for interacting with GitHub API."""
+    """Service for interacting with GitHub Issues API."""
 
     def __init__(self):
         """Initialize GitHub service."""
         self.token = Config.GITHUB_TOKEN
-        self.api_url = Config.GITHUB_API_URL
+        self.api_url = "https://api.github.com"
         self.headers = {
             "Authorization": f"token {self.token}",
             "Accept": "application/vnd.github.v3+json",
             "Content-Type": "application/json",
+            "X-GitHub-Api-Version": "2022-11-28",
         }
+        self.assignee = Config.GITHUB_ASSIGNEE
 
-    def push_branch(self, repo: Repo, branch_name: str) -> None:
-        """
-        Push branch to GitHub.
-
-        Args:
-            repo: GitPython Repo object
-            branch_name: Branch name to push
-
-        Raises:
-            Exception: If push fails
-        """
-        logger.info(f"Pushing branch {branch_name} to GitHub")
-
-        try:
-            origin = repo.remote(name="origin")
-            origin.push(branch_name)
-
-            logger.info(f"Successfully pushed {branch_name}")
-
-        except Exception as e:
-            logger.error(f"Failed to push branch: {str(e)}")
-            raise
-
-    def create_pull_request(
+    def create_issue(
         self,
         repo_name: str,
-        branch_name: str,
-        base_branch: str,
-        root_cause: str,
-        summary: str,
+        service_name: str,
         error_log: str,
-    ) -> PullRequestResult:
+        root_cause: str,
+        suggested_fix: str,
+        severity: str = "medium",
+        environment: str = "production",
+    ) -> GitHubIssueResult:
         """
-        Create a pull request on GitHub.
+        Create a GitHub issue for the alert.
 
         Args:
             repo_name: Repository name in format 'org/repo'
-            branch_name: Source branch name
-            base_branch: Target branch name (usually 'main')
-            root_cause: Root cause of the failure
-            summary: Summary of the fix
+            service_name: Service name where alert originated
             error_log: Original error log
+            root_cause: LLM analysis of root cause
+            suggested_fix: Suggested steps to fix
+            severity: Alert severity level
+            environment: Environment (production/staging/development)
 
         Returns:
-            PullRequestResult with PR details
+            GitHubIssueResult with issue details
 
         Raises:
-            Exception: If PR creation fails
+            Exception: If issue creation fails
         """
-        logger.info(f"Creating pull request for {repo_name}")
+        logger.info(f"Creating GitHub issue for {repo_name} ({service_name})")
 
-        # Build PR title and body
-        pr_title = "AI Fix: Pipeline Failure"
-        pr_body = self._build_pr_body(root_cause, summary, error_log)
+        # Build issue title and body
+        issue_title = f"[Alert] Error detected in {service_name}"
+        issue_body = self._build_issue_body(
+            service_name, error_log, root_cause, suggested_fix, environment
+        )
 
         # API endpoint
-        url = f"{self.api_url}/repos/{repo_name}/pulls"
+        url = f"{self.api_url}/repos/{repo_name}/issues"
 
-        # Request payload
+        # Build payload
         payload = {
-            "title": pr_title,
-            "head": branch_name,
-            "base": base_branch,
-            "body": pr_body,
-            "maintainer_can_modify": True,
+            "title": issue_title,
+            "body": issue_body,
+            "labels": self._get_labels(severity),
         }
+
+        # Add assignee if configured
+        if self.assignee:
+            payload["assignees"] = [self.assignee]
+            logger.info(f"Assigning issue to @{self.assignee}")
 
         try:
             # Make API request
@@ -98,87 +83,131 @@ class GitHubService:
                 url, headers=self.headers, json=payload, timeout=30
             )
 
+            if response.status_code == 403:
+                logger.error("GitHub API rate limited or authentication failed")
+                raise Exception("GitHub API access denied")
+
+            if response.status_code == 404:
+                logger.error(f"Repository not found: {repo_name}")
+                raise Exception(f"Repository not found: {repo_name}")
+
             response.raise_for_status()
 
             # Parse response
-            pr_data = response.json()
-            pr_number = pr_data["number"]
-            pr_url = pr_data["html_url"]
+            issue_data = response.json()
+            issue_number = issue_data["number"]
+            issue_url = issue_data["html_url"]
 
-            logger.info(f"Successfully created PR #{pr_number}: {pr_url}")
+            logger.info(f"Successfully created issue #{issue_number}: {issue_url}")
 
-            # Add labels to PR
-            self._add_labels(repo_name, pr_number, ["automated", "ai-fix"])
-
-            return PullRequestResult(
-                pr_number=pr_number, pr_url=pr_url, branch_name=branch_name
+            return GitHubIssueResult(
+                issue_number=issue_number,
+                issue_url=issue_url,
+                assigned_to=self.assignee,
             )
 
         except requests.exceptions.RequestException as e:
-            logger.error(f"Failed to create pull request: {str(e)}")
+            logger.error(f"Failed to create issue: {str(e)}")
             if hasattr(e, "response") and e.response is not None:
                 logger.error(f"Response: {e.response.text}")
             raise
 
-    def _build_pr_body(self, root_cause: str, summary: str, error_log: str) -> str:
-        """Build pull request body with markdown formatting."""
+    def _build_issue_body(
+        self,
+        service_name: str,
+        error_log: str,
+        root_cause: str,
+        suggested_fix: str,
+        environment: str,
+    ) -> str:
+        """Build issue body with markdown formatting."""
         # Truncate error log if too long
-        max_error_length = 1000
+        max_error_length = 2000
         truncated_error = (
             error_log
             if len(error_log) <= max_error_length
             else f"{error_log[:max_error_length]}..."
         )
 
-        pr_body = f"""## AI-Generated Fix
+        issue_body = f"""## Alert Details
 
-This pull request was automatically generated by the AI Failure Analyzer service.
+**Service:** {service_name}  
+**Environment:** {environment}  
+**Timestamp:** *Auto-generated at alert time*
 
-### Root Cause
-{root_cause}
+## Error Log
 
-### Changes Made
-{summary}
-
-### Original Error Log
 ```
 {truncated_error}
 ```
 
-### Important
-- This is an automated fix generated by AI
-- Please review the changes carefully before merging
-- Run tests to verify the fix works as expected
-- The fix follows minimal change principles
+## Root Cause Analysis (AI)
+
+{root_cause}
+
+## Suggested Fix
+
+{suggested_fix}
+
+## Action Items
+
+- [ ] Review the error and root cause analysis
+- [ ] Implement the suggested fix
+- [ ] Run tests to verify the fix
+- [ ] Update documentation if needed
+- [ ] Close this issue once resolved
 
 ---
-*Generated by AI Failure Analyzer Service*
+
+*This issue was automatically created by the Alert-to-Issue automation service.*
 """
-        return pr_body
+        return issue_body
 
-    def _add_labels(self, repo_name: str, pr_number: int, labels: list[str]) -> None:
-        """
-        Add labels to pull request.
+    def _get_labels(self, severity: str) -> list:
+        """Get labels based on severity."""
+        labels = ["alert", "automated"]
 
-        Args:
-            repo_name: Repository name
-            pr_number: Pull request number
-            labels: List of label names
+        # Add severity labels
+        severity_map = {
+            "low": "severity/low",
+            "medium": "severity/medium",
+            "high": "severity/high",
+            "critical": "severity/critical",
+        }
+
+        if severity in severity_map:
+            labels.append(severity_map[severity])
+
+        return labels
+
+    def check_rate_limit(self) -> Dict[str, Any]:
         """
-        url = f"{self.api_url}/repos/{repo_name}/issues/{pr_number}/labels"
+        Check GitHub API rate limit status.
+
+        Returns:
+            Rate limit information
+
+        Raises:
+            Exception: If API call fails
+        """
+        url = f"{self.api_url}/rate_limit"
 
         try:
-            response = requests.post(
-                url, headers=self.headers, json={"labels": labels}, timeout=30
-            )
+            response = requests.get(url, headers=self.headers, timeout=10)
+            response.raise_for_status()
 
-            if response.status_code == 200:
-                logger.info(f"Added labels {labels} to PR #{pr_number}")
-            else:
-                logger.warning(f"Failed to add labels: {response.status_code}")
+            data = response.json()
+            remaining = data["rate"]["remaining"]
+            limit = data["rate"]["limit"]
+            reset_time = data["rate"]["reset"]
+
+            logger.info(f"GitHub API: {remaining}/{limit} requests remaining")
+
+            return {"remaining": remaining, "limit": limit, "reset_time": reset_time}
 
         except Exception as e:
-            logger.warning(f"Could not add labels: {str(e)}")
+            logger.warning(f"Could not check rate limit: {str(e)}")
+            return {}
 
     def get_repository_info(self, repo_name: str) -> Dict[str, Any]:
         """
@@ -189,12 +218,14 @@ This pull request was automatically generated by the AI Failure Analyzer service
 
         Returns:
             Repository information dictionary
+
+        Raises:
+            Exception: If API call fails
         """
         url = f"{self.api_url}/repos/{repo_name}"
 
         try:
             response = requests.get(url, headers=self.headers, timeout=30)
-
             response.raise_for_status()
             return response.json()
 
