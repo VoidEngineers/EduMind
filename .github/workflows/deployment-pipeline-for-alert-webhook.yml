@@ -1,9 +1,11 @@
-name: AI Failure Analyzer - Deployment Pipeline
+name: Alert-to-Issue Webhook - Deployment Pipeline
 
 on:
   push:
     branches:
-      [main, develop, devops/implementing-the-ci-pipeline-for-models-deployment]
+      - main
+      - develop
+      - devops/implementing-the-ci-pipeline-for-models-deployment
     paths:
       - "deployments/poc-ci-pipeline-webhook-service/**"
       - ".github/workflows/deployment-pipeline-for-alert-webhook.yml"
@@ -11,6 +13,7 @@ on:
     branches: [main]
     paths:
       - "deployments/poc-ci-pipeline-webhook-service/**"
+      - ".github/workflows/deployment-pipeline-for-alert-webhook.yml"
 
 permissions:
   id-token: write
@@ -27,56 +30,51 @@ jobs:
         working-directory: deployments/poc-ci-pipeline-webhook-service
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: "pip"
+          cache-dependency-path: deployments/poc-ci-pipeline-webhook-service/requirements.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install flake8 black pytest pytest-cov
+          pip install flake8 black
 
       - name: Lint code with flake8
         id: lint
         continue-on-error: true
         run: |
           echo "Running flake8 linting..."
-          # Stop the build if there are Python syntax errors or undefined names
           flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
-          # Exit-zero treats all errors as warnings
-          flake8 app/ --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
+          flake8 app/ --count --exit-zero --max-complexity=12 --max-line-length=120 --statistics
 
-      - name: Format code with black
+      - name: Check formatting with black
         id: format_check
         run: |
-          echo "Formatting code with black..."
-          black app/
-          echo "Code formatted successfully"
+          echo "Checking formatting (black --check)..."
+          black --check app/
 
-      - name: Run unit tests
+      - name: Syntax and import smoke test
         id: tests
         continue-on-error: true
         run: |
-          echo "Running unit tests..."
-          # Validate imports without triggering config validation
-          python -c "from app import models, error_parser, llm_service, patch_service, github_service"
-          echo "All imports successful"
+          echo "py_compile + FastAPI app import..."
+          python -m py_compile app/*.py
+          python -c "from app.main import app; print('FastAPI app import OK')"
 
-      - name: Validate configuration
+      - name: Validate configuration (required env vars)
         id: config_validation
         continue-on-error: true
         env:
-          OPENAI_API_KEY: test_key_for_validation
-          GITHUB_TOKEN: test_token_for_validation
-          GITHUB_ORG: test_org
+          OPENAI_API_KEY: test_key_for_ci
+          GITHUB_TOKEN: test_token_for_ci
         run: |
-          echo "Validating configuration structure..."
-          python -c "from app.config import Config; print('Config validation passed')"
+          python -c "from app.config import Config; Config.validate(); print('Config.validate() OK')"
 
       - name: Check integration status
         id: final_status
@@ -100,7 +98,7 @@ jobs:
       image_uri: ${{ steps.build-image.outputs.image }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Utilities
         run: |
@@ -108,7 +106,7 @@ jobs:
           sudo apt-get install -y jq unzip
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_VIKUM }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_VIKUM }}
@@ -116,7 +114,7 @@ jobs:
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
@@ -126,8 +124,6 @@ jobs:
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
           IMAGE_TAG: latest
         run: |
-          # Build a docker container using the Dockerfile
-          # and push it to ECR so that it can be deployed
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
@@ -152,19 +148,18 @@ jobs:
       deployment_result: ${{ steps.deployment_status.outcome }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Deploy to AWS Lightsail
         id: run_container
         continue-on-error: true
-        uses: appleboy/ssh-action@v1.0.0
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.LIGHTSAIL_HOST_VIKUM }}
           username: ${{ secrets.LIGHTSAIL_USER_UBUNTU }}
           key: ${{ secrets.LIGHTSAIL_SSH_KEY_VIKUM }}
           port: 22
           script: |
-            # Install AWS CLI if not present
             if ! command -v aws &> /dev/null; then
               echo "AWS CLI not found. Installing..."
               curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -174,44 +169,37 @@ jobs:
               echo "AWS CLI installed successfully"
             fi
 
-            # Configure AWS credentials on Lightsail instance
             export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID_VIKUM }}
             export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY_VIKUM }}
             export AWS_DEFAULT_REGION=${{ secrets.AWS_REGION }}
 
-            # Login to ECR
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_LOGIN_URI_VIKUM }}
 
-            # Pull the latest image
             docker pull ${{ secrets.AWS_ECR_LOGIN_URI_VIKUM }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
 
-            # Stop and remove existing container if running
-            docker ps -q --filter "name=ai-failure-analyzer" | grep -q . && docker stop ai-failure-analyzer && docker rm -fv ai-failure-analyzer || true
+            docker ps -q --filter "name=alert-to-issue-webhook" | grep -q . && docker stop alert-to-issue-webhook && docker rm -fv alert-to-issue-webhook || true
 
-            # Run the new container
-            docker run -d -p 8000:8000 --name=ai-failure-analyzer \
+            docker run -d -p 8000:8000 --name=alert-to-issue-webhook \
               --restart unless-stopped \
               -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
               -e GITHUB_TOKEN=${{ secrets.PERSONAL_GITHUB_TOKEN_VIKUM_CLASSIC }} \
-              -e GITHUB_ORG=${{ secrets.ORG_IN_GITHUB }} \
-              -e OPENAI_MODEL=gpt-4 \
+              -e GITHUB_ASSIGNEE=copilot \
+              -e OPENAI_MODEL=gpt-4o \
               -e OPENAI_TEMPERATURE=0.2 \
               -e LOG_LEVEL=INFO \
               -e SERVICE_PORT=8000 \
-              -e MAX_FILES_TO_MODIFY=3 \
+              -e SERVICE_HOST=0.0.0.0 \
+              -e WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }} \
+              -e WEBHOOK_API_KEY=${{ secrets.WEBHOOK_API_KEY }} \
               -v /tmp/repos:/tmp/repos \
               ${{ secrets.AWS_ECR_LOGIN_URI_VIKUM }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
 
-            # Wait for container to start
             sleep 5
 
-            # Check container health
-            if docker ps | grep -q ai-failure-analyzer; then
+            if docker ps | grep -q alert-to-issue-webhook; then
               echo "Container started successfully"
-              
-              # Test health endpoint
               for i in {1..10}; do
-                if curl -f http://localhost:8000/health > /dev/null 2>&1; then
+                if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
                   echo "Service is healthy!"
                   break
                 fi
@@ -223,7 +211,6 @@ jobs:
               exit 1
             fi
 
-            # Clean up unused images and containers
             docker system prune -f
 
       - name: Set deployment status
@@ -248,8 +235,8 @@ jobs:
         with:
           loki_endpoint: "https://${{ secrets.GRAFANA_LOKI_USER_CLOUD }}:${{ secrets.GRAFANA_LOKI_TKN_CLOUD }}@logs-prod-028.grafana.net"
           github_token: ${{ secrets.PERSONAL_GITHUB_TOKEN_VIKUM_FOR_LOGS }}
-          labels: "service_name=ai-failure-analyzer,repo=MLOps-Bootcamp,project=webhook-service,status=separator,workflow=${{ github.workflow }},run_id=${{ github.run_id }},commit_sha=${{ github.sha }},actor=${{ github.actor }},branch=${{ github.ref_name }}"
-          message_to_loki: "\n\n═══════════════════════════════════════════════════════════════\nNEW EXECUTION STARTED - AI FAILURE ANALYZER\n═══════════════════════════════════════════════════════════════\nRun ID: ${{ github.run_id }}\nCommit: ${{ github.sha }}\nActor: ${{ github.actor }}\nBranch: ${{ github.ref_name }}\nTimestamp: ${{ github.event.head_commit.timestamp }}\n═══════════════════════════════════════════════════════════════\n\n"
+          labels: "service_name=alert-to-issue-webhook,repo=EduMind,project=poc-ci-pipeline-webhook-service,status=separator,workflow=${{ github.workflow }},run_id=${{ github.run_id }},commit_sha=${{ github.sha }},actor=${{ github.actor }},branch=${{ github.ref_name }}"
+          message_to_loki: "\n\n═══════════════════════════════════════════════════════════════\nNEW EXECUTION STARTED - ALERT-TO-ISSUE WEBHOOK\n═══════════════════════════════════════════════════════════════\nRun ID: ${{ github.run_id }}\nCommit: ${{ github.sha }}\nActor: ${{ github.actor }}\nBranch: ${{ github.ref_name }}\nApp: deployments/poc-ci-pipeline-webhook-service\n═══════════════════════════════════════════════════════════════\n\n"
 
       - name: Send detailed failure logs to Loki
         if: |
@@ -260,7 +247,7 @@ jobs:
         with:
           loki_endpoint: "https://${{ secrets.GRAFANA_LOKI_USER_CLOUD }}:${{ secrets.GRAFANA_LOKI_TKN_CLOUD }}@logs-prod-028.grafana.net"
           github_token: ${{ secrets.PERSONAL_GITHUB_TOKEN_VIKUM_FOR_LOGS }}
-          labels: "service_name=ai-failure-analyzer,repo=MLOps-Bootcamp,project=webhook-service,status=failure,workflow=${{ github.workflow }},run_id=${{ github.run_id }},commit_sha=${{ github.sha }},actor=${{ github.actor }},branch=${{ github.ref_name }},integration=${{ needs.integration.result }},build=${{ needs.build-and-push-ecr-image.result }},deployment=${{ needs.continuous-deployment.result }}"
+          labels: "service_name=alert-to-issue-webhook,repo=EduMind,project=poc-ci-pipeline-webhook-service,status=failure,workflow=${{ github.workflow }},run_id=${{ github.run_id }},commit_sha=${{ github.sha }},actor=${{ github.actor }},branch=${{ github.ref_name }},integration=${{ needs.integration.result }},build=${{ needs.build-and-push-ecr-image.result }},deployment=${{ needs.continuous-deployment.result }}"
 
       - name: Send success message to Loki
         if: |
@@ -271,28 +258,5 @@ jobs:
         with:
           loki_endpoint: "https://${{ secrets.GRAFANA_LOKI_USER_CLOUD }}:${{ secrets.GRAFANA_LOKI_TKN_CLOUD }}@logs-prod-028.grafana.net"
           github_token: ${{ secrets.PERSONAL_GITHUB_TOKEN_VIKUM_FOR_LOGS }}
-          labels: "service_name=ai-failure-analyzer,repo=MLOps-Bootcamp,project=webhook-service,status=success,workflow=${{ github.workflow }},run_id=${{ github.run_id }},commit_sha=${{ github.sha }},actor=${{ github.actor }},branch=${{ github.ref_name }}"
-          message_to_loki: "AI Failure Analyzer deployment completed successfully | Service: http://${{ secrets.LIGHTSAIL_HOST_VIKUM }}:8000 | Commit: ${{ github.sha }} | Actor: ${{ github.actor }} | Branch: ${{ github.ref_name }}"
-
-#   notify-on-failure:
-#     runs-on: ubuntu-latest
-#     needs: [continuous-deployment]
-#     if: failure()
-#     steps:
-#       - name: Send webhook notification on failure
-#         run: |
-#           echo "Pipeline failed - you could trigger the AI Failure Analyzer here!"
-#           echo "Repository: ${{ github.repository }}"
-#           echo "Branch: ${{ github.ref_name }}"
-#           echo "Commit: ${{ github.sha }}"
-#           echo "Workflow: ${{ github.workflow }}"
-
-#           # Example: Send to the webhook service itself (meta!)
-#           # curl -X POST http://your-webhook-service:8000/pipeline-failure \
-#           #   -H "Content-Type: application/json" \
-#           #   -d '{
-#           #     "repo": "${{ github.repository }}",
-#           #     "branch": "${{ github.ref_name }}",
-#           #     "commit": "${{ github.sha }}",
-#           #     "error_log": "${{ github.workflow }} failed"
-#           #   }'
+          labels: "service_name=alert-to-issue-webhook,repo=EduMind,project=poc-ci-pipeline-webhook-service,status=success,workflow=${{ github.workflow }},run_id=${{ github.run_id }},commit_sha=${{ github.sha }},actor=${{ github.actor }},branch=${{ github.ref_name }}"
+          message_to_loki: "Alert-to-Issue Webhook deployment completed | Service: http://${{ secrets.LIGHTSAIL_HOST_VIKUM }}:8000/webhook/grafana | Health: http://${{ secrets.LIGHTSAIL_HOST_VIKUM }}:8000/health | Commit: ${{ github.sha }} | Actor: ${{ github.actor }} | Branch: ${{ github.ref_name }}"

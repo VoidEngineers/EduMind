@@ -1,24 +1,70 @@
-"""LLM service for generating fixes using OpenAI."""
+"""LLM service using OpenAI Chat Completions over HTTP (no openai SDK — avoids import / Responses issues)."""
 
 import json
 import logging
-from typing import Dict
+from typing import Any, Dict
 
-from openai import OpenAI
+import requests
 
 from app.config import Config
-from app.models import LLMResponse, ParsedError
+from app.models import LLMAnalysis, ParsedError
 
 logger = logging.getLogger(__name__)
 
+OPENAI_CHAT_COMPLETIONS_URL = "https://api.openai.com/v1/chat/completions"
+OPENAI_TIMEOUT_SEC = 120.0
+
+# Plain "gpt-4" / "gpt-4-0613" often 404 on default keys; map to a widely available chat model.
+_LEGACY_CHAT_MODELS = frozenset({"gpt-4", "gpt-4-0613"})
+
+
+def _raise_for_openai_status(http: requests.Response) -> None:
+    """Raise RuntimeError with OpenAI's error body; never rely on generic HTTPError text alone."""
+    if http.ok:
+        return
+    code: str | None = None
+    message = f"HTTP {http.status_code}"
+    detail_log: Any = message
+    try:
+        body = http.json()
+        detail_log = body
+        err = body.get("error")
+        if isinstance(err, dict):
+            code = err.get("code") or err.get("type")
+            if err.get("message"):
+                message = str(err["message"])
+    except Exception:
+        message = (http.text or "")[:800] or message
+        detail_log = message
+
+    logger.error(
+        "OpenAI chat.completions HTTP %s: %s", http.status_code, detail_log
+    )
+
+    suffix = ""
+    if code == "insufficient_quota":
+        suffix = (
+            " Billing: https://platform.openai.com/account/billing — add credits or a "
+            "payment method, or use an API key from an org with an active plan."
+        )
+
+    if code:
+        raise RuntimeError(f"OpenAI ({code}): {message}.{suffix}")
+    raise RuntimeError(f"OpenAI: {message}.{suffix}")
+
 
 class LLMService:
-    """Service for interacting with OpenAI API to generate fixes."""
+    """POST /v1/chat/completions — same idea as `client.chat.completions.create` without the SDK."""
 
-    def __init__(self):
-        """Initialize LLM service."""
-        self.client = OpenAI(api_key=Config.OPENAI_API_KEY)
-        self.model = Config.OPENAI_MODEL
+    def __init__(self) -> None:
+        self.api_key = Config.OPENAI_API_KEY
+        self.model = Config.OPENAI_MODEL.strip()
+        if self.model.lower() in {m.lower() for m in _LEGACY_CHAT_MODELS}:
+            logger.info(
+                "OPENAI_MODEL=%s is often unavailable; using gpt-4o for chat completions",
+                self.model,
+            )
+            self.model = "gpt-4o"
         self.temperature = Config.OPENAI_TEMPERATURE
 
     def generate_fix(
@@ -28,7 +74,7 @@ class LLMService:
         relevant_files: Dict[str, str],
         repo_name: str,
         branch: str,
-    ) -> LLMResponse:
+    ) -> LLMAnalysis:
         """
         Generate a fix for the pipeline failure using LLM.
 
@@ -40,48 +86,63 @@ class LLMService:
             branch: Branch name
 
         Returns:
-            LLMResponse with fix details
+            LLMAnalysis with fix details
 
         Raises:
             Exception: If LLM call fails
         """
         logger.info(f"Generating fix using {self.model}")
 
-        # Build context for LLM
         system_prompt = self._build_system_prompt()
         user_prompt = self._build_user_prompt(
             error_log, parsed_error, relevant_files, repo_name, branch
         )
 
         try:
-            # Call OpenAI API
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
+            payload: Dict[str, Any] = {
+                "model": self.model,
+                "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
-                temperature=self.temperature,
-                response_format={"type": "json_object"},
+                "temperature": self.temperature,
+                "response_format": {"type": "json_object"},
+            }
+            http = requests.post(
+                OPENAI_CHAT_COMPLETIONS_URL,
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+                timeout=OPENAI_TIMEOUT_SEC,
             )
+            _raise_for_openai_status(http)
 
-            # Parse response
-            content = response.choices[0].message.content
+            data = http.json()
+            content = (
+                (data.get("choices") or [{}])[0]
+                .get("message", {})
+                .get("content")
+            )
+            if not content or not str(content).strip():
+                raise ValueError("OpenAI response missing choices[0].message.content")
+
+            content = str(content).strip()
             logger.info(f"Received LLM response: {len(content)} characters")
 
-            # Parse JSON response
             fix_data = json.loads(content)
 
-            llm_response = LLMResponse(
+            llm_analysis = LLMAnalysis(
                 root_cause=fix_data.get("root_cause", "Unknown"),
-                files_to_modify=fix_data.get("files_to_modify", []),
-                patch=fix_data.get("patch", ""),
-                summary=fix_data.get("summary", ""),
+                suggested_fix=fix_data.get("summary", fix_data.get("patch", "")),
+                severity=fix_data.get("severity", "medium"),
+                affected_components=fix_data.get("affected_components", []),
             )
 
-            logger.info(f"Fix generated for {len(llm_response.files_to_modify)} files")
+            logger.info(f"Analysis complete: {llm_analysis.severity} severity")
 
-            return llm_response
+            return llm_analysis
 
         except Exception as e:
             logger.error(f"LLM service error: {str(e)}")
@@ -128,11 +189,13 @@ You MUST respond with valid JSON in this exact format:
         branch: str,
     ) -> str:
         """Build user prompt with error context."""
-        # Format relevant files
+        files_map: Dict[str, str] = (
+            relevant_files if isinstance(relevant_files, dict) else {}
+        )
         files_context = "\n\n".join(
             [
                 f"### File: {path}\n```\n{content[:2000]}\n```"  # Limit content length
-                for path, content in relevant_files.items()
+                for path, content in files_map.items()
             ]
         )
 

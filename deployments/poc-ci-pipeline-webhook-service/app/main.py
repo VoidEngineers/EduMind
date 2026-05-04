@@ -1,26 +1,19 @@
-"""Self-Healing Webhook Service - AI-powered CI/CD failure fixer."""
+"""Alert-to-Issue Webhook Service - Automatic GitHub issue creation from Grafana alerts."""
 
 import logging
-import asyncio
+import json
+import hmac
+import hashlib
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from fastapi import FastAPI, HTTPException, Request, Header
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
-import hmac
-import hashlib
 
 from app.config import Config
-from app.models import (
-    GrafanaAlertPayload, 
-    WebhookRequest, 
-    WebhookResponse,
-    PullRequestResult
-)
+from app.models import GrafanaAlertPayload, WebhookResponse, LLMAnalysis
 from app.error_parser import ErrorParser
-from app.repo_service import RepoService
 from app.llm_service import LLMService
-from app.patch_service import PatchService
 from app.github_service import GitHubService
 
 # Configure logging
@@ -34,19 +27,19 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifecycle management."""
-    logger.info("Starting Self-Healing Webhook Service")
+    logger.info("Starting Alert-to-Issue Webhook Service")
     logger.info(f"Port: {Config.SERVICE_PORT}")
-    logger.info(f"Clone Dir: {Config.CLONE_DIRECTORY}")
     logger.info(f"OpenAI Model: {Config.OPENAI_MODEL}")
+    logger.info(f"GitHub Assignee: {Config.GITHUB_ASSIGNEE}")
     yield
-    logger.info("Shutting down Self-Healing Webhook Service")
+    logger.info("Shutting down Alert-to-Issue Webhook Service")
 
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="Self-Healing Webhook Service",
-    description="Auto-fixes CI/CD failures using AI",
-    version="2.0.0",
+    title="Alert-to-Issue Webhook Service",
+    description="Auto-creates GitHub issues from Grafana alerts using AI analysis",
+    version="1.0.0",
     lifespan=lifespan,
 )
 
@@ -57,9 +50,9 @@ app = FastAPI(
 async def root():
     """Root health check."""
     return {
-        "service": "Self-Healing Webhook",
+        "service": "Alert-to-Issue Webhook",
         "status": "healthy",
-        "version": "2.0.0",
+        "version": "1.0.0",
         "timestamp": datetime.utcnow().isoformat()
     }
 
@@ -72,13 +65,26 @@ async def health_check():
         "configuration": {
             "openai_configured": bool(Config.OPENAI_API_KEY),
             "github_configured": bool(Config.GITHUB_TOKEN),
-            "clone_directory": Config.CLONE_DIRECTORY,
+            "github_assignee": Config.GITHUB_ASSIGNEE,
         },
         "timestamp": datetime.utcnow().isoformat()
     }
 
 
 # ============ Webhook Verification ============
+
+def _api_key_from_request(request: Request) -> str | None:
+    """Extract bearer/API key from common webhook header patterns."""
+    if key := request.headers.get("X-Api-Key"):
+        return key.strip() or None
+    if key := request.headers.get("X-Webhook-Token"):
+        return key.strip() or None
+    auth = request.headers.get("Authorization") or ""
+    if auth.lower().startswith("bearer "):
+        token = auth[7:].strip()
+        return token or None
+    return None
+
 
 def verify_webhook_signature(payload: bytes, signature: str) -> bool:
     """
@@ -106,49 +112,100 @@ def verify_webhook_signature(payload: bytes, signature: str) -> bool:
         return False
 
 
-# ============ Main Webhook Endpoints ============
+# ============ Main Webhook Endpoint ============
 
 @app.post("/webhook/grafana", response_model=WebhookResponse)
-async def handle_grafana_webhook(
-    payload: GrafanaAlertPayload,
-    x_webhook_signature: str = Header(None),
-    request: Request = None
-):
+async def handle_grafana_alert(request: Request):
     """
-    Handle Grafana alert webhook for self-healing automation.
+    Handle Grafana alert and create GitHub issue.
     
     Workflow:
-    1. Parse Grafana alert payload
-    2. Extract error information from annotations
-    3. Generate fix using LLM
-    4. Create PR with automated fix
+    1. Verify webhook signature (optional)
+    2. Extract error from Grafana alert
+    3. Parse error using error parser
+    4. Analyze error with LLM
+    5. Create GitHub issue with analysis
+    6. Assign to configured user
     
     Args:
-        payload: Grafana alert JSON payload
-        x_webhook_signature: Optional webhook signature header (X-Webhook-Signature)
         request: FastAPI request object
         
     Returns:
-        WebhookResponse with PR details or error
+        WebhookResponse with issue details or error
     """
-    logger.info(f"Received Grafana alert: {payload.ruleName}")
-    
-    repo_service = None
-    repo = None
+    logger.info("Received Grafana alert webhook")
     
     try:
-        # Step 0: Verify webhook signature (optional)
-        if Config.WEBHOOK_SECRET:
-            if not x_webhook_signature:
-                logger.error("Webhook signature required but not provided")
-                raise HTTPException(status_code=401, detail="Missing X-Webhook-Signature header")
-            
-            body = await request.body()
-            if not verify_webhook_signature(body, x_webhook_signature):
-                logger.error(f"Expected: {hmac.new(Config.WEBHOOK_SECRET.encode(), body, hashlib.sha256).hexdigest()[:20]}...")
-                logger.error(f"Got: {x_webhook_signature[:20]}...")
-                logger.warning("Webhook signature verification failed")
-                raise HTTPException(status_code=401, detail="Invalid signature")
+        # Get raw body for signature verification
+        body = await request.body()
+        
+        # Step 0: Webhook auth (optional)
+        # - WEBHOOK_SECRET: requires X-Webhook-Signature = HMAC-SHA256(secret, raw body).hexdigest()
+        # - WEBHOOK_API_KEY: requires X-Api-Key, X-Webhook-Token, or Authorization: Bearer <key>
+        # If both are set, either method may be used (e.g. HMAC from scripts, static key from Grafana).
+        has_hmac = bool(Config.WEBHOOK_SECRET)
+        has_api_key = bool(Config.WEBHOOK_API_KEY)
+
+        if has_hmac or has_api_key:
+            x_webhook_signature = request.headers.get("X-Webhook-Signature")
+            hmac_ok = (
+                has_hmac
+                and bool(x_webhook_signature)
+                and verify_webhook_signature(body, x_webhook_signature)
+            )
+            received_key = _api_key_from_request(request)
+            api_ok = False
+            if has_api_key and received_key:
+                try:
+                    api_ok = hmac.compare_digest(
+                        Config.WEBHOOK_API_KEY.encode("utf-8"),
+                        received_key.encode("utf-8"),
+                    )
+                except Exception:
+                    api_ok = False
+
+            if has_hmac and not has_api_key:
+                if not x_webhook_signature:
+                    logger.error("Webhook signature required but not provided")
+                    raise HTTPException(
+                        status_code=401,
+                        detail="Missing X-Webhook-Signature header (HMAC-SHA256 of raw body using WEBHOOK_SECRET)",
+                    )
+                if not hmac_ok:
+                    logger.error(
+                        f"Expected: {hmac.new(Config.WEBHOOK_SECRET.encode(), body, hashlib.sha256).hexdigest()[:20]}..."
+                    )
+                    logger.error(f"Got: {x_webhook_signature[:20]}...")
+                    logger.warning("Webhook signature verification failed")
+                    raise HTTPException(status_code=401, detail="Invalid signature")
+            elif has_api_key and not has_hmac:
+                if not received_key:
+                    logger.error("Webhook API key required but not provided")
+                    raise HTTPException(
+                        status_code=401,
+                        detail="Missing API key: set header X-Api-Key, X-Webhook-Token, or Authorization: Bearer <WEBHOOK_API_KEY>",
+                    )
+                if not api_ok:
+                    logger.warning("Webhook API key verification failed")
+                    raise HTTPException(status_code=401, detail="Invalid API key")
+            else:
+                if not (hmac_ok or api_ok):
+                    if not x_webhook_signature and not received_key:
+                        logger.error(
+                            "Webhook auth required: no X-Webhook-Signature and no API key header"
+                        )
+                        raise HTTPException(
+                            status_code=401,
+                            detail="Missing authentication: X-Webhook-Signature (HMAC) or X-Api-Key / Bearer token",
+                        )
+                    logger.warning("Webhook authentication failed (HMAC and API key both invalid)")
+                    raise HTTPException(status_code=401, detail="Invalid webhook authentication")
+        
+        # Parse JSON body
+        payload_dict = json.loads(body.decode())
+        payload = GrafanaAlertPayload(**payload_dict)
+        
+        logger.info(f"Received Grafana alert: {payload.ruleName}")
         
         # Step 1: Extract error information from Grafana annotations
         logger.info("Step 1: Extracting error from Grafana alert")
@@ -159,7 +216,8 @@ async def handle_grafana_webhook(
         )
         
         repo = payload.commonAnnotations.get("repo")
-        branch = payload.commonAnnotations.get("branch", "main")
+        service_name = payload.commonAnnotations.get("service_name", "unknown-service")
+        environment = payload.commonAnnotations.get("environment", "production")
         
         if not repo:
             raise ValueError(
@@ -171,7 +229,8 @@ async def handle_grafana_webhook(
             raise ValueError("No error message found in Grafana alert")
         
         logger.info(f"Repository: {repo}")
-        logger.info(f"Branch: {branch}")
+        logger.info(f"Service: {service_name}")
+        logger.info(f"Environment: {environment}")
         logger.info(f"Error: {error_log[:100]}...")
         
         # Step 2: Parse error log
@@ -179,88 +238,50 @@ async def handle_grafana_webhook(
         parsed_error = ErrorParser.parse(error_log)
         logger.info(f"Error Type: {parsed_error.error_type}")
         
-        # Step 3: Clone repository
-        logger.info("Step 3: Cloning repository")
-        repo_service = RepoService()
-        repo_obj = repo_service.clone_repository(repo, branch)
-        logger.info("Repository cloned")
-        
-        # Step 4: Get relevant files
-        logger.info("Step 4: Analyzing relevant files")
-        relevant_files = repo_service.get_relevant_files(repo_obj)
-        logger.info(f"Found {len(relevant_files)} relevant files")
-        
-        # Step 5: Generate fix using LLM
-        logger.info("Step 5: Generating fix with AI")
+        # Step 3: Generate LLM analysis
+        logger.info("Step 3: Analyzing error with LLM")
         llm_service = LLMService()
+
         llm_response = llm_service.generate_fix(
             error_log=error_log,
             parsed_error=parsed_error,
-            relevant_files=relevant_files,
+            relevant_files={},  # Issue flow has no repo file context
             repo_name=repo,
-            branch=branch,
+            branch="",
         )
-        logger.info(f"Root Cause: {llm_response.root_cause[:80]}...")
-        logger.info(f"Files to modify: {llm_response.files_to_modify}")
+
+        root_cause = llm_response.root_cause
+        suggested_fix = llm_response.suggested_fix
         
-        # Step 6: Create fix branch
-        logger.info("Step 6: Creating feature branch")
-        branch_name = repo_service.create_fix_branch(repo_obj)
-        logger.info(f"Branch: {branch_name}")
+        logger.info(f"Root Cause: {root_cause[:80]}...")
+        logger.info(f"Suggested Fix: {suggested_fix[:80]}...")
         
-        # Step 7: Apply patch
-        logger.info("Step 7: Applying patch")
-        patch_success = PatchService.apply_patch(
-            repo_obj,
-            llm_response.patch,
-            llm_response.files_to_modify
-        )
-        
-        if not patch_success:
-            raise Exception("Failed to apply patch to files")
-        logger.info("Patch applied successfully")
-        
-        # Step 8: Commit changes
-        logger.info("Step 8: Committing changes")
-        PatchService.commit_changes(
-            repo_obj,
-            branch_name,
-            llm_response.summary
-        )
-        logger.info("Changes committed")
-        
-        # Step 9: Push and create PR
-        logger.info("Step 9: Pushing branch and creating PR")
+        # Step 4: Create GitHub issue
+        logger.info("Step 4: Creating GitHub issue")
         github_service = GitHubService()
-        github_service.push_branch(repo_obj, branch_name)
         
-        pr_result = github_service.create_pull_request(
+        issue_result = github_service.create_issue(
             repo_name=repo,
-            branch_name=branch_name,
-            base_branch=branch,
-            root_cause=llm_response.root_cause,
-            summary=llm_response.summary,
+            service_name=service_name,
             error_log=error_log,
+            root_cause=root_cause,
+            suggested_fix=suggested_fix,
+            severity="high",  # Can be enhanced to parse from payload
+            environment=environment,
         )
         
-        logger.info(f"Successfully created PR: {pr_result.pr_url}")
-        
-        # Cleanup
-        if repo_service:
-            repo_service.cleanup_repository(repo)
+        logger.info(f"Successfully created issue #{issue_result.issue_number}: {issue_result.issue_url}")
         
         return WebhookResponse(
             status="success",
-            message=f"Auto-fixed! PR created: #{pr_result.pr_number}",
-            pr_url=pr_result.pr_url,
+            message=f"Alert processed! Issue created: #{issue_result.issue_number}",
+            issue_url=issue_result.issue_url,
+            issue_number=issue_result.issue_number,
         )
     
     except ValueError as e:
         error_msg = str(e)
         logger.error(f"Validation Error: {error_msg}")
-        
-        if repo_service and repo:
-            repo_service.cleanup_repository(repo)
         
         return WebhookResponse(
             status="error",
@@ -268,143 +289,17 @@ async def handle_grafana_webhook(
             error=error_msg,
         )
     
+    except HTTPException as e:
+        raise
+    
     except Exception as e:
         logger.error(f"Error processing webhook: {str(e)}", exc_info=True)
         
-        if repo_service and repo:
-            try:
-                repo_service.cleanup_repository(repo)
-            except:
-                pass
-        
         return WebhookResponse(
             status="error",
-            message="Failed to auto-fix pipeline failure",
+            message="Failed to process alert",
             error=str(e),
         )
-
-
-@app.post("/webhook/generic", response_model=WebhookResponse)
-async def handle_generic_webhook(
-    payload: WebhookRequest,
-    x_webhook_signature: str = Header(None),
-    request: Request = None
-):
-    """
-    Generic webhook endpoint for manual error fixing.
-    
-    Accepts structured webhook payloads with repo, branch, and error.
-    Supports optional HMAC-SHA256 signature verification.
-    
-    Args:
-        payload: WebhookRequest with fix details
-        x_webhook_signature: Optional webhook signature header (X-Webhook-Signature)
-        request: FastAPI request object
-        
-    Returns:
-        WebhookResponse with PR details or error
-    """
-    logger.info(f"Received generic webhook for {payload.repo}")
-    
-    repo_service = None
-    
-    try:
-        # Step 0: Verify webhook signature (optional)
-        if Config.WEBHOOK_SECRET:
-            if not x_webhook_signature:
-                logger.error("Webhook signature required but not provided")
-                raise HTTPException(status_code=401, detail="Missing X-Webhook-Signature header")
-            
-            body = await request.body()
-            if not verify_webhook_signature(body, x_webhook_signature):
-                logger.error(f"Expected: {hmac.new(Config.WEBHOOK_SECRET.encode(), body, hashlib.sha256).hexdigest()[:20]}...")
-                logger.error(f"Got: {x_webhook_signature[:20]}...")
-                logger.warning("Webhook signature verification failed")
-                raise HTTPException(status_code=401, detail="Invalid signature")
-        
-        # Parse error
-        logger.info("Parsing error...")
-        parsed_error = ErrorParser.parse(payload.error_log)
-        
-        # Clone repo
-        logger.info("Cloning repository...")
-        repo_service = RepoService()
-        repo_obj = repo_service.clone_repository(
-            payload.repo,
-            payload.branch,
-            payload.commit
-        )
-        
-        # Get files
-        relevant_files = repo_service.get_relevant_files(repo_obj)
-        logger.info(f"Found {len(relevant_files)} relevant files")
-        
-        # Generate fix
-        logger.info("Generating fix...")
-        llm_service = LLMService()
-        llm_response = llm_service.generate_fix(
-            error_log=payload.error_log,
-            parsed_error=parsed_error,
-            relevant_files=relevant_files,
-            repo_name=payload.repo,
-            branch=payload.branch,
-        )
-        
-        # Create branch
-        branch_name = repo_service.create_fix_branch(repo_obj)
-        
-        # Apply patch
-        patch_success = PatchService.apply_patch(
-            repo_obj,
-            llm_response.patch,
-            llm_response.files_to_modify
-        )
-        
-        if not patch_success:
-            raise Exception("Failed to apply patch")
-        
-        # Commit
-        PatchService.commit_changes(repo_obj, branch_name, llm_response.summary)
-        
-        # Push and create PR
-        github_service = GitHubService()
-        github_service.push_branch(repo_obj, branch_name)
-        
-        pr_result = github_service.create_pull_request(
-            repo_name=payload.repo,
-            branch_name=branch_name,
-            base_branch=payload.branch,
-            root_cause=llm_response.root_cause,
-            summary=llm_response.summary,
-            error_log=payload.error_log,
-        )
-        
-        logger.info(f"PR created: {pr_result.pr_url}")
-        
-        if repo_service:
-            repo_service.cleanup_repository(payload.repo)
-        
-        return WebhookResponse(
-            status="success",
-            message=f"Auto-fixed! PR created: #{pr_result.pr_number}",
-            pr_url=pr_result.pr_url,
-        )
-    
-    except Exception as e:
-        logger.error(f"Error: {str(e)}", exc_info=True)
-        
-        if repo_service:
-            try:
-                repo_service.cleanup_repository(payload.repo)
-            except:
-                pass
-        
-        return WebhookResponse(
-            status="error",
-            message="Failed to auto-fix",
-            error=str(e),
-        )
-
 
 
 # ============ Exception Handlers ============

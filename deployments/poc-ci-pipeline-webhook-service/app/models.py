@@ -1,16 +1,10 @@
-"""Pydantic models for Self-Healing Webhook Service."""
+"""Pydantic models for Alert-to-Issue Webhook Service."""
 
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
 
 
 # ============ Grafana Models ============
-class GrafanaAnnotation(BaseModel):
-    """Grafana annotation field."""
-    text: Optional[str] = None
-    value: Optional[str] = None
-
-
 class GrafanaEvalMatch(BaseModel):
     """Grafana evaluation match."""
     metric: str
@@ -39,7 +33,8 @@ class GrafanaAlertPayload(BaseModel):
                     "description": "Pipeline failed",
                     "error_log": "ModuleNotFoundError: No module named 'pandas'",
                     "repo": "org/repo",
-                    "branch": "main"
+                    "service_name": "api-service",
+                    "environment": "production"
                 },
                 "commonLabels": {
                     "severity": "critical"
@@ -48,25 +43,7 @@ class GrafanaAlertPayload(BaseModel):
         }
 
 
-class WebhookRequest(BaseModel):
-    """Self-healing webhook request."""
-    repo: str = Field(..., description="Repository in format 'org/repository-name'")
-    branch: str = Field(..., description="Target branch")
-    error_log: str = Field(..., description="Error message or log")
-    commit: Optional[str] = Field(None, description="Optional commit SHA")
-    
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "repo": "myorg/myrepo",
-                "branch": "main",
-                "error_log": "ModuleNotFoundError: No module named 'pandas'",
-                "commit": "abc123"
-            }
-        }
-
-
-# ============ Existing Models ============
+# ============ Error Analysis Models ============
 class ParsedError(BaseModel):
     """Parsed error information."""
     error_type: str = Field(..., description="Type of error")
@@ -77,24 +54,27 @@ class ParsedError(BaseModel):
     line_number: Optional[int] = Field(None, description="Line number if available")
 
 
-class LLMResponse(BaseModel):
-    """Response from LLM service."""
-    root_cause: str = Field(..., description="Root cause of the failure")
-    files_to_modify: List[str] = Field(..., description="List of files to modify")
-    patch: str = Field(..., description="Unified diff patch")
-    summary: str = Field(..., description="Summary of the fix")
+class LLMAnalysis(BaseModel):
+    """LLM analysis of the error."""
+    root_cause: str = Field(..., description="Root cause analysis")
+    suggested_fix: str = Field(..., description="Suggested steps to fix")
+    severity: str = Field(default="medium", description="Severity level (low/medium/high/critical)")
+    affected_components: List[str] = Field(default_factory=list, description="Components affected")
 
 
-class PullRequestResult(BaseModel):
-    """Result of PR creation."""
-    pr_number: int = Field(..., description="Pull request number")
-    pr_url: str = Field(..., description="Pull request URL")
-    branch_name: str = Field(..., description="Created branch name")
+# ============ GitHub Issue Models ============
+class GitHubIssueResult(BaseModel):
+    """Result of GitHub issue creation."""
+    issue_number: int = Field(..., description="GitHub issue number")
+    issue_url: str = Field(..., description="GitHub issue URL")
+    assigned_to: Optional[str] = Field(None, description="Assigned user (e.g., copilot)")
 
 
+# ============ Response Models ============
 class WebhookResponse(BaseModel):
     """Standard webhook response."""
     status: str = Field(..., description="Response status (success/error)")
     message: str = Field(..., description="Human-readable message")
-    pr_url: Optional[str] = Field(None, description="Created PR URL if successful")
+    issue_url: Optional[str] = Field(None, description="Created issue URL if successful")
+    issue_number: Optional[int] = Field(None, description="Issue number if successful")
     error: Optional[str] = Field(None, description="Error details if failed")
