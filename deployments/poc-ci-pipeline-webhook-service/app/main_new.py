@@ -111,7 +111,7 @@ def verify_webhook_signature(payload: bytes, signature: str) -> bool:
 @app.post("/webhook/grafana", response_model=WebhookResponse)
 async def handle_grafana_webhook(
     payload: GrafanaAlertPayload,
-    x_webhook_signature: str = Header(None),
+    x_grafana_signature: str = Header(None),
     request: Request = None
 ):
     """
@@ -125,7 +125,7 @@ async def handle_grafana_webhook(
     
     Args:
         payload: Grafana alert JSON payload
-        x_webhook_signature: Optional webhook signature header (X-Webhook-Signature)
+        x_grafana_signature: Optional webhook signature
         request: FastAPI request object
         
     Returns:
@@ -137,16 +137,10 @@ async def handle_grafana_webhook(
     repo = None
     
     try:
-        # Step 0: Verify webhook signature (optional)
-        if Config.WEBHOOK_SECRET:
-            if not x_webhook_signature:
-                logger.error("Webhook signature required but not provided")
-                raise HTTPException(status_code=401, detail="Missing X-Webhook-Signature header")
-            
+        # Step 0: Verify webhook (optional)
+        if Config.WEBHOOK_SECRET and request:
             body = await request.body()
-            if not verify_webhook_signature(body, x_webhook_signature):
-                logger.error(f"Expected: {hmac.new(Config.WEBHOOK_SECRET.encode(), body, hashlib.sha256).hexdigest()[:20]}...")
-                logger.error(f"Got: {x_webhook_signature[:20]}...")
+            if not verify_webhook_signature(body, x_grafana_signature or ""):
                 logger.warning("Webhook signature verification failed")
                 raise HTTPException(status_code=401, detail="Invalid signature")
         
@@ -285,21 +279,14 @@ async def handle_grafana_webhook(
 
 
 @app.post("/webhook/generic", response_model=WebhookResponse)
-async def handle_generic_webhook(
-    payload: WebhookRequest,
-    x_webhook_signature: str = Header(None),
-    request: Request = None
-):
+async def handle_generic_webhook(payload: WebhookRequest):
     """
     Generic webhook endpoint for manual error fixing.
     
     Accepts structured webhook payloads with repo, branch, and error.
-    Supports optional HMAC-SHA256 signature verification.
     
     Args:
         payload: WebhookRequest with fix details
-        x_webhook_signature: Optional webhook signature header (X-Webhook-Signature)
-        request: FastAPI request object
         
     Returns:
         WebhookResponse with PR details or error
@@ -309,19 +296,6 @@ async def handle_generic_webhook(
     repo_service = None
     
     try:
-        # Step 0: Verify webhook signature (optional)
-        if Config.WEBHOOK_SECRET:
-            if not x_webhook_signature:
-                logger.error("Webhook signature required but not provided")
-                raise HTTPException(status_code=401, detail="Missing X-Webhook-Signature header")
-            
-            body = await request.body()
-            if not verify_webhook_signature(body, x_webhook_signature):
-                logger.error(f"Expected: {hmac.new(Config.WEBHOOK_SECRET.encode(), body, hashlib.sha256).hexdigest()[:20]}...")
-                logger.error(f"Got: {x_webhook_signature[:20]}...")
-                logger.warning("Webhook signature verification failed")
-                raise HTTPException(status_code=401, detail="Invalid signature")
-        
         # Parse error
         logger.info("Parsing error...")
         parsed_error = ErrorParser.parse(payload.error_log)
@@ -404,7 +378,6 @@ async def handle_generic_webhook(
             message="Failed to auto-fix",
             error=str(e),
         )
-
 
 
 # ============ Exception Handlers ============
