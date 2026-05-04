@@ -35,12 +35,12 @@ class Config:
     def validate(cls) -> None:
         """Validate required configuration."""
         missing = []
-        
+
         if not cls.OPENAI_API_KEY:
             missing.append("OPENAI_API_KEY")
         if not cls.GITHUB_TOKEN:
             missing.append("GITHUB_TOKEN")
-            
+
         if missing:
             raise ValueError(
                 f"Missing required environment variables: {', '.join(missing)}"

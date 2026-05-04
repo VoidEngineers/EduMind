@@ -37,9 +37,7 @@ def _raise_for_openai_status(http: requests.Response) -> None:
         message = (http.text or "")[:800] or message
         detail_log = message
 
-    logger.error(
-        "OpenAI chat.completions HTTP %s: %s", http.status_code, detail_log
-    )
+    logger.error("OpenAI chat.completions HTTP %s: %s", http.status_code, detail_log)
 
     suffix = ""
     if code == "insufficient_quota":
@@ -120,11 +118,7 @@ class LLMService:
             _raise_for_openai_status(http)
 
             data = http.json()
-            content = (
-                (data.get("choices") or [{}])[0]
-                .get("message", {})
-                .get("content")
-            )
+            content = (data.get("choices") or [{}])[0].get("message", {}).get("content")
             if not content or not str(content).strip():
                 raise ValueError("OpenAI response missing choices[0].message.content")
 

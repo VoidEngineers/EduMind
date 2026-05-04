@@ -46,6 +46,7 @@ app = FastAPI(
 
 # ============ Health Check Endpoints ============
 
+
 @app.get("/")
 async def root():
     """Root health check."""
@@ -53,7 +54,7 @@ async def root():
         "service": "Alert-to-Issue Webhook",
         "status": "healthy",
         "version": "1.0.0",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
 
@@ -67,11 +68,12 @@ async def health_check():
             "github_configured": bool(Config.GITHUB_TOKEN),
             "github_assignee": Config.GITHUB_ASSIGNEE,
         },
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
 
 # ============ Webhook Verification ============
+
 
 def _api_key_from_request(request: Request) -> str | None:
     """Extract bearer/API key from common webhook header patterns."""
@@ -89,22 +91,20 @@ def _api_key_from_request(request: Request) -> str | None:
 def verify_webhook_signature(payload: bytes, signature: str) -> bool:
     """
     Verify webhook signature if WEBHOOK_SECRET is configured.
-    
+
     Args:
         payload: Raw request body
         signature: Signature header value
-        
+
     Returns:
         True if signature is valid or no secret configured
     """
     if not Config.WEBHOOK_SECRET:
         return True
-    
+
     try:
         expected = hmac.new(
-            Config.WEBHOOK_SECRET.encode(),
-            payload,
-            hashlib.sha256
+            Config.WEBHOOK_SECRET.encode(), payload, hashlib.sha256
         ).hexdigest()
         return hmac.compare_digest(expected, signature)
     except Exception as e:
@@ -114,11 +114,12 @@ def verify_webhook_signature(payload: bytes, signature: str) -> bool:
 
 # ============ Main Webhook Endpoint ============
 
+
 @app.post("/webhook/grafana", response_model=WebhookResponse)
 async def handle_grafana_alert(request: Request):
     """
     Handle Grafana alert and create GitHub issue.
-    
+
     Workflow:
     1. Verify webhook signature (optional)
     2. Extract error from Grafana alert
@@ -126,19 +127,19 @@ async def handle_grafana_alert(request: Request):
     4. Analyze error with LLM
     5. Create GitHub issue with analysis
     6. Assign to configured user
-    
+
     Args:
         request: FastAPI request object
-        
+
     Returns:
         WebhookResponse with issue details or error
     """
     logger.info("Received Grafana alert webhook")
-    
+
     try:
         # Get raw body for signature verification
         body = await request.body()
-        
+
         # Step 0: Webhook auth (optional)
         # - WEBHOOK_SECRET: requires X-Webhook-Signature = HMAC-SHA256(secret, raw body).hexdigest()
         # - WEBHOOK_API_KEY: requires X-Api-Key, X-Webhook-Token, or Authorization: Bearer <key>
@@ -198,46 +199,51 @@ async def handle_grafana_alert(request: Request):
                             status_code=401,
                             detail="Missing authentication: X-Webhook-Signature (HMAC) or X-Api-Key / Bearer token",
                         )
-                    logger.warning("Webhook authentication failed (HMAC and API key both invalid)")
-                    raise HTTPException(status_code=401, detail="Invalid webhook authentication")
-        
+                    logger.warning(
+                        "Webhook authentication failed (HMAC and API key both invalid)"
+                    )
+                    raise HTTPException(
+                        status_code=401, detail="Invalid webhook authentication"
+                    )
+
         # Parse JSON body
         payload_dict = json.loads(body.decode())
         payload = GrafanaAlertPayload(**payload_dict)
-        
+
         logger.info(f"Received Grafana alert: {payload.ruleName}")
-        
+
         # Step 1: Extract error information from Grafana annotations
         logger.info("Step 1: Extracting error from Grafana alert")
-        
+
         error_log = payload.commonAnnotations.get(
             "error_log",
-            payload.commonAnnotations.get("description", payload.message or "Unknown error")
+            payload.commonAnnotations.get(
+                "description", payload.message or "Unknown error"
+            ),
         )
-        
+
         repo = payload.commonAnnotations.get("repo")
         service_name = payload.commonAnnotations.get("service_name", "unknown-service")
         environment = payload.commonAnnotations.get("environment", "production")
-        
+
         if not repo:
             raise ValueError(
-                "Missing 'repo' in Grafana alert annotations. "
-                "Format: org/repo-name"
+                "Missing 'repo' in Grafana alert annotations. " "Format: org/repo-name"
             )
-        
+
         if not error_log:
             raise ValueError("No error message found in Grafana alert")
-        
+
         logger.info(f"Repository: {repo}")
         logger.info(f"Service: {service_name}")
         logger.info(f"Environment: {environment}")
         logger.info(f"Error: {error_log[:100]}...")
-        
+
         # Step 2: Parse error log
         logger.info("Step 2: Parsing error information")
         parsed_error = ErrorParser.parse(error_log)
         logger.info(f"Error Type: {parsed_error.error_type}")
-        
+
         # Step 3: Generate LLM analysis
         logger.info("Step 3: Analyzing error with LLM")
         llm_service = LLMService()
@@ -252,14 +258,14 @@ async def handle_grafana_alert(request: Request):
 
         root_cause = llm_response.root_cause
         suggested_fix = llm_response.suggested_fix
-        
+
         logger.info(f"Root Cause: {root_cause[:80]}...")
         logger.info(f"Suggested Fix: {suggested_fix[:80]}...")
-        
+
         # Step 4: Create GitHub issue
         logger.info("Step 4: Creating GitHub issue")
         github_service = GitHubService()
-        
+
         issue_result = github_service.create_issue(
             repo_name=repo,
             service_name=service_name,
@@ -269,32 +275,34 @@ async def handle_grafana_alert(request: Request):
             severity="high",  # Can be enhanced to parse from payload
             environment=environment,
         )
-        
-        logger.info(f"Successfully created issue #{issue_result.issue_number}: {issue_result.issue_url}")
-        
+
+        logger.info(
+            f"Successfully created issue #{issue_result.issue_number}: {issue_result.issue_url}"
+        )
+
         return WebhookResponse(
             status="success",
             message=f"Alert processed! Issue created: #{issue_result.issue_number}",
             issue_url=issue_result.issue_url,
             issue_number=issue_result.issue_number,
         )
-    
+
     except ValueError as e:
         error_msg = str(e)
         logger.error(f"Validation Error: {error_msg}")
-        
+
         return WebhookResponse(
             status="error",
             message="Validation failed",
             error=error_msg,
         )
-    
+
     except HTTPException as e:
         raise
-    
+
     except Exception as e:
         logger.error(f"Error processing webhook: {str(e)}", exc_info=True)
-        
+
         return WebhookResponse(
             status="error",
             message="Failed to process alert",
@@ -303,6 +311,7 @@ async def handle_grafana_alert(request: Request):
 
 
 # ============ Exception Handlers ============
+
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
