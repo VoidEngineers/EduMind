@@ -235,7 +235,7 @@ jobs:
         with:
           loki_endpoint: "https://${{ secrets.GRAFANA_LOKI_USER_CLOUD }}:${{ secrets.GRAFANA_LOKI_TKN_CLOUD }}@logs-prod-028.grafana.net"
           github_token: ${{ secrets.PERSONAL_GITHUB_TOKEN_VIKUM_FOR_LOGS }}
-          labels: "service_name=alert-to-issue-webhook,repo=EduMind,project=poc-ci-pipeline-webhook-service,status=separator,workflow=${{ github.workflow }},run_id=${{ github.run_id }},commit_sha=${{ github.sha }},actor=${{ github.actor }},branch=${{ github.ref_name }}"
+          labels: "service_name=alert-to-issue-webhook-job,repo=EduMind,project=poc-ci-pipeline-webhook-service,status=separator,workflow=${{ github.workflow }},run_id=${{ github.run_id }},commit_sha=${{ github.sha }},actor=${{ github.actor }},branch=${{ github.ref_name }}"
           message_to_loki: "\n\n═══════════════════════════════════════════════════════════════\nNEW EXECUTION STARTED - ALERT-TO-ISSUE WEBHOOK\n═══════════════════════════════════════════════════════════════\nRun ID: ${{ github.run_id }}\nCommit: ${{ github.sha }}\nActor: ${{ github.actor }}\nBranch: ${{ github.ref_name }}\nApp: deployments/poc-ci-pipeline-webhook-service\n═══════════════════════════════════════════════════════════════\n\n"
 
       - name: Send detailed failure logs to Loki
@@ -247,7 +247,7 @@ jobs:
         with:
           loki_endpoint: "https://${{ secrets.GRAFANA_LOKI_USER_CLOUD }}:${{ secrets.GRAFANA_LOKI_TKN_CLOUD }}@logs-prod-028.grafana.net"
           github_token: ${{ secrets.PERSONAL_GITHUB_TOKEN_VIKUM_FOR_LOGS }}
-          labels: "service_name=alert-to-issue-webhook,repo=EduMind,project=poc-ci-pipeline-webhook-service,status=failure,workflow=${{ github.workflow }},run_id=${{ github.run_id }},commit_sha=${{ github.sha }},actor=${{ github.actor }},branch=${{ github.ref_name }},integration=${{ needs.integration.result }},build=${{ needs.build-and-push-ecr-image.result }},deployment=${{ needs.continuous-deployment.result }}"
+          labels: "service_name=alert-to-issue-webhook-job,repo=EduMind,project=poc-ci-pipeline-webhook-service,status=failure,workflow=${{ github.workflow }},run_id=${{ github.run_id }},commit_sha=${{ github.sha }},actor=${{ github.actor }},branch=${{ github.ref_name }},integration=${{ needs.integration.result }},build=${{ needs.build-and-push-ecr-image.result }},deployment=${{ needs.continuous-deployment.result }}"
 
       - name: Send success message to Loki
         if: |
@@ -258,5 +258,5 @@ jobs:
         with:
           loki_endpoint: "https://${{ secrets.GRAFANA_LOKI_USER_CLOUD }}:${{ secrets.GRAFANA_LOKI_TKN_CLOUD }}@logs-prod-028.grafana.net"
           github_token: ${{ secrets.PERSONAL_GITHUB_TOKEN_VIKUM_FOR_LOGS }}
-          labels: "service_name=alert-to-issue-webhook,repo=EduMind,project=poc-ci-pipeline-webhook-service,status=success,workflow=${{ github.workflow }},run_id=${{ github.run_id }},commit_sha=${{ github.sha }},actor=${{ github.actor }},branch=${{ github.ref_name }}"
+          labels: "service_name=alert-to-issue-webhook-job,repo=EduMind,project=poc-ci-pipeline-webhook-service,status=success,workflow=${{ github.workflow }},run_id=${{ github.run_id }},commit_sha=${{ github.sha }},actor=${{ github.actor }},branch=${{ github.ref_name }}"
           message_to_loki: "Alert-to-Issue Webhook deployment completed | Service: http://${{ secrets.LIGHTSAIL_HOST_VIKUM }}:8000/webhook/grafana | Health: http://${{ secrets.LIGHTSAIL_HOST_VIKUM }}:8000/health | Commit: ${{ github.sha }} | Actor: ${{ github.actor }} | Branch: ${{ github.ref_name }}"
