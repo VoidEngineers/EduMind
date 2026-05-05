@@ -135,7 +135,7 @@ OPENAI_API_KEY=sk-your-openai-api-key
 GITHUB_TOKEN=ghp_your-github-token
 
 # Optional (with defaults)
-GITHUB_ASSIGNEE=copilot
+ASSIGNEE_GITHUB_ISSUE=copilot
 LOG_LEVEL=INFO
 SERVICE_PORT=8000
 SERVICE_HOST=0.0.0.0
@@ -144,17 +144,17 @@ WEBHOOK_SECRET=                    # For HMAC verification (optional)
 
 ### Configuration Reference
 
-| Variable             | Description                            | Required | Default |
-| -------------------- | -------------------------------------- | -------- | ------- |
-| `OPENAI_API_KEY`     | OpenAI API key                         | Yes      | -       |
-| `GITHUB_TOKEN`       | GitHub Personal Access Token           | Yes      | -       |
-| `GITHUB_ASSIGNEE`    | GitHub user for issue assignment       | No       | copilot |
-| `OPENAI_MODEL`       | LLM model                              | No       | gpt-4   |
-| `OPENAI_TEMPERATURE` | LLM temperature (0-2)                  | No       | 0.2     |
-| `LOG_LEVEL`          | Logging level                          | No       | INFO    |
-| `SERVICE_PORT`       | Service port                           | No       | 8000    |
-| `SERVICE_HOST`       | Service host                           | No       | 0.0.0.0 |
-| `WEBHOOK_SECRET`     | HMAC secret for signature verification | No       | -       |
+| Variable                | Description                            | Required | Default |
+| ----------------------- | -------------------------------------- | -------- | ------- |
+| `OPENAI_API_KEY`        | OpenAI API key                         | Yes      | -       |
+| `GITHUB_TOKEN`          | GitHub Personal Access Token           | Yes      | -       |
+| `ASSIGNEE_GITHUB_ISSUE` | GitHub user for issue assignment       | No       | copilot |
+| `OPENAI_MODEL`          | LLM model                              | No       | gpt-4   |
+| `OPENAI_TEMPERATURE`    | LLM temperature (0-2)                  | No       | 0.2     |
+| `LOG_LEVEL`             | Logging level                          | No       | INFO    |
+| `SERVICE_PORT`          | Service port                           | No       | 8000    |
+| `SERVICE_HOST`          | Service host                           | No       | 0.0.0.0 |
+| `WEBHOOK_SECRET`        | HMAC secret for signature verification | No       | -       |
 
 ---
 
@@ -500,7 +500,7 @@ python test_alert_to_issue.py
 
 - GitHub user exists: `https://github.com/{username}`
 - User has repository access
-- Username correct in `GITHUB_ASSIGNEE`
+- Username correct in `ASSIGNEE_GITHUB_ISSUE`
 - Restart service after changing config
 
 ### Issue: GitHub Rate Limited

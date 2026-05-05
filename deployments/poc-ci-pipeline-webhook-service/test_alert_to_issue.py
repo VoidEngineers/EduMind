@@ -12,8 +12,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_URL = "http://localhost:8000"
-GITHUB_ORG = os.getenv("GITHUB_ORG", "your-org")
-TEST_REPO = f"{GITHUB_ORG}/dummy-testing-repo"
+ORG_IN_GITHUB = os.getenv("ORG_IN_GITHUB", "your-org")
+TEST_REPO = f"{ORG_IN_GITHUB}/dummy-testing-repo"
 WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")
 
 
@@ -34,8 +34,9 @@ def _post_grafana_alert(payload: dict) -> requests.Response:
     if signature:
         headers["X-Webhook-Signature"] = signature
 
+        # f"{BASE_URL}/webhook/grafana",
     return requests.post(
-        f"{BASE_URL}/webhook/grafana",
+        f"{BASE_URL}/create-issue",
         data=payload_json,
         headers=headers,
         timeout=60,
@@ -249,6 +250,37 @@ def test_alert_missing_repo():
         return False
 
 
+def test_create_issue_simple():
+    """Test create-issue endpoint with summary and error_details."""
+    print("[TEST] Create Issue: Simple Payload")
+    print("-" * 70)
+
+    payload = {
+        "summary": "Pipeline failure: test case",
+        "error_details": "ValidationError: dummy failure in pipeline stage",
+        "repo": TEST_REPO,
+        "service_name": "ci-runner",
+        "environment": "staging",
+        "severity": "high",
+    }
+
+    try:
+        response = _post_grafana_alert(payload)
+        print(f"Status: {response.status_code}")
+        result = response.json()
+        print(f"Message: {result.get('message', '')}")
+        if result.get("status") == "success":
+            print(f"Issue URL: {result['issue_url']}")
+            print(f"Issue #: {result['issue_number']}")
+        else:
+            print(f"Error: {result.get('error', 'Unknown error')}")
+        print()
+        return _webhook_success(response, result)
+    except Exception as e:
+        print(f"Request Error: {str(e)}\n")
+        return False
+
+
 if __name__ == "__main__":
     print("=" * 70)
     print("Alert-to-Issue Webhook Service - Test Suite")
@@ -275,8 +307,11 @@ if __name__ == "__main__":
     
     test_results = []
     
-    print("TEST 2: Missing Dependency Error")
-    test_results.append(("Missing Dependency", test_alert_missing_dependency()))
+    # print("TEST 2: Missing Dependency Error")
+    # test_results.append(("Missing Dependency", test_alert_missing_dependency()))
+
+    print("TEST 3: Create Issue (Simple Payload)")
+    test_results.append(("Create Issue Simple", test_create_issue_simple()))
     
     # print("TEST 3: Import Error")
     # test_results.append(("Import Error", test_alert_import_error()))

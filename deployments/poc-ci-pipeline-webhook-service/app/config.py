@@ -17,8 +17,8 @@ class Config:
 
     # GitHub Configuration
     GITHUB_TOKEN: str = os.getenv("GITHUB_TOKEN", "")
-    GITHUB_ASSIGNEE: str = os.getenv("GITHUB_ASSIGNEE", "copilot")
-    GITHUB_TIMEOUT: int = int(os.getenv("GITHUB_TIMEOUT", "30"))
+    ASSIGNEE_GITHUB_ISSUE: str = os.getenv("ASSIGNEE_GITHUB_ISSUE", "copilot")
+    TIMEOUT_FOR_GITHUB: int = int(os.getenv("TIMEOUT_FOR_GITHUB", "30"))
 
     # Application Configuration
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")

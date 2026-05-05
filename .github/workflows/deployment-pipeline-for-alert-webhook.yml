@@ -183,7 +183,7 @@ jobs:
               --restart unless-stopped \
               -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
               -e GITHUB_TOKEN=${{ secrets.PERSONAL_GITHUB_TOKEN_VIKUM_CLASSIC }} \
-              -e GITHUB_ASSIGNEE=copilot \
+              -e ASSIGNEE_GITHUB_ISSUE=copilot \
               -e OPENAI_MODEL=gpt-4o \
               -e OPENAI_TEMPERATURE=0.2 \
               -e LOG_LEVEL=INFO \

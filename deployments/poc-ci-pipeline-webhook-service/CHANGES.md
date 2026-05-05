@@ -187,7 +187,7 @@ Alert → Analyze → Create Issue → Assign → Done
 
 **Added Settings:**
 
-- `GITHUB_ASSIGNEE` - Issue assignment user (default: "copilot")
+- `ASSIGNEE_GITHUB_ISSUE` - Issue assignment user (default: "copilot")
 
 **Result:** 40% smaller configuration file
 
@@ -366,7 +366,7 @@ MAX_FILES_TO_MODIFY=3
 #### Added
 
 ```env
-GITHUB_ASSIGNEE=copilot
+ASSIGNEE_GITHUB_ISSUE=copilot
 ```
 
 #### Same

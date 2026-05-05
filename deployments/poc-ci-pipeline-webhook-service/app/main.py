@@ -2,8 +2,6 @@
 
 import logging
 import json
-import hmac
-import hashlib
 from contextlib import asynccontextmanager
 from datetime import datetime
 
@@ -30,7 +28,7 @@ async def lifespan(app: FastAPI):
     logger.info("Starting Alert-to-Issue Webhook Service")
     logger.info(f"Port: {Config.SERVICE_PORT}")
     logger.info(f"OpenAI Model: {Config.OPENAI_MODEL}")
-    logger.info(f"GitHub Assignee: {Config.GITHUB_ASSIGNEE}")
+    logger.info(f"GitHub Assignee: {Config.ASSIGNEE_GITHUB_ISSUE}")
     yield
     logger.info("Shutting down Alert-to-Issue Webhook Service")
 
@@ -66,50 +64,10 @@ async def health_check():
         "configuration": {
             "openai_configured": bool(Config.OPENAI_API_KEY),
             "github_configured": bool(Config.GITHUB_TOKEN),
-            "github_assignee": Config.GITHUB_ASSIGNEE,
+            "github_assignee": Config.ASSIGNEE_GITHUB_ISSUE,
         },
         "timestamp": datetime.utcnow().isoformat(),
     }
-
-
-# ============ Webhook Verification ============
-
-
-def _api_key_from_request(request: Request) -> str | None:
-    """Extract bearer/API key from common webhook header patterns."""
-    if key := request.headers.get("X-Api-Key"):
-        return key.strip() or None
-    if key := request.headers.get("X-Webhook-Token"):
-        return key.strip() or None
-    auth = request.headers.get("Authorization") or ""
-    if auth.lower().startswith("bearer "):
-        token = auth[7:].strip()
-        return token or None
-    return None
-
-
-def verify_webhook_signature(payload: bytes, signature: str) -> bool:
-    """
-    Verify webhook signature if WEBHOOK_SECRET is configured.
-
-    Args:
-        payload: Raw request body
-        signature: Signature header value
-
-    Returns:
-        True if signature is valid or no secret configured
-    """
-    if not Config.WEBHOOK_SECRET:
-        return True
-
-    try:
-        expected = hmac.new(
-            Config.WEBHOOK_SECRET.encode(), payload, hashlib.sha256
-        ).hexdigest()
-        return hmac.compare_digest(expected, signature)
-    except Exception as e:
-        logger.error(f"Signature verification error: {e}")
-        return False
 
 
 # ============ Main Webhook Endpoint ============
@@ -139,72 +97,6 @@ async def handle_grafana_alert(request: Request):
     try:
         # Get raw body for signature verification
         body = await request.body()
-
-        # Step 0: Webhook auth (optional)
-        # - WEBHOOK_SECRET: requires X-Webhook-Signature = HMAC-SHA256(secret, raw body).hexdigest()
-        # - WEBHOOK_API_KEY: requires X-Api-Key, X-Webhook-Token, or Authorization: Bearer <key>
-        # If both are set, either method may be used (e.g. HMAC from scripts, static key from Grafana).
-        has_hmac = bool(Config.WEBHOOK_SECRET)
-        has_api_key = bool(Config.WEBHOOK_API_KEY)
-
-        if has_hmac or has_api_key:
-            x_webhook_signature = request.headers.get("X-Webhook-Signature")
-            hmac_ok = (
-                has_hmac
-                and bool(x_webhook_signature)
-                and verify_webhook_signature(body, x_webhook_signature)
-            )
-            received_key = _api_key_from_request(request)
-            api_ok = False
-            if has_api_key and received_key:
-                try:
-                    api_ok = hmac.compare_digest(
-                        Config.WEBHOOK_API_KEY.encode("utf-8"),
-                        received_key.encode("utf-8"),
-                    )
-                except Exception:
-                    api_ok = False
-
-            if has_hmac and not has_api_key:
-                if not x_webhook_signature:
-                    logger.error("Webhook signature required but not provided")
-                    raise HTTPException(
-                        status_code=401,
-                        detail="Missing X-Webhook-Signature header (HMAC-SHA256 of raw body using WEBHOOK_SECRET)",
-                    )
-                if not hmac_ok:
-                    logger.error(
-                        f"Expected: {hmac.new(Config.WEBHOOK_SECRET.encode(), body, hashlib.sha256).hexdigest()[:20]}..."
-                    )
-                    logger.error(f"Got: {x_webhook_signature[:20]}...")
-                    logger.warning("Webhook signature verification failed")
-                    raise HTTPException(status_code=401, detail="Invalid signature")
-            elif has_api_key and not has_hmac:
-                if not received_key:
-                    logger.error("Webhook API key required but not provided")
-                    raise HTTPException(
-                        status_code=401,
-                        detail="Missing API key: set header X-Api-Key, X-Webhook-Token, or Authorization: Bearer <WEBHOOK_API_KEY>",
-                    )
-                if not api_ok:
-                    logger.warning("Webhook API key verification failed")
-                    raise HTTPException(status_code=401, detail="Invalid API key")
-            else:
-                if not (hmac_ok or api_ok):
-                    if not x_webhook_signature and not received_key:
-                        logger.error(
-                            "Webhook auth required: no X-Webhook-Signature and no API key header"
-                        )
-                        raise HTTPException(
-                            status_code=401,
-                            detail="Missing authentication: X-Webhook-Signature (HMAC) or X-Api-Key / Bearer token",
-                        )
-                    logger.warning(
-                        "Webhook authentication failed (HMAC and API key both invalid)"
-                    )
-                    raise HTTPException(
-                        status_code=401, detail="Invalid webhook authentication"
-                    )
 
         # Parse JSON body
         payload_dict = json.loads(body.decode())
@@ -306,6 +198,122 @@ async def handle_grafana_alert(request: Request):
         return WebhookResponse(
             status="error",
             message="Failed to process alert",
+            error=str(e),
+        )
+
+
+@app.post("/create-issue", response_model=WebhookResponse)
+async def create_issue_from_webhook(request: Request):
+    """
+    Create a GitHub issue from a generic webhook payload.
+
+    Expected fields (flexible):
+    - summary: issue title (required)
+    - error_details/error_log/description/message: issue body (required)
+    - repo: GitHub repo in org/repo format (required)
+    """
+    logger.info("Received create-issue webhook")
+
+    try:
+        body = await request.body()
+        payload_dict = json.loads(body.decode())
+
+        common_annotations = payload_dict.get("commonAnnotations", {}) or {}
+        common_labels = payload_dict.get("commonLabels", {}) or {}
+
+        summary = (
+            payload_dict.get("summary")
+            or common_annotations.get("summary")
+            or common_labels.get("summary")
+            or payload_dict.get("title")
+            or payload_dict.get("message")
+        )
+
+        error_details = (
+            payload_dict.get("error_details")
+            or payload_dict.get("error_log")
+            or common_annotations.get("error_details")
+            or common_annotations.get("error_log")
+            or common_annotations.get("description")
+            or payload_dict.get("description")
+            or payload_dict.get("message")
+        )
+
+        repo = (
+            payload_dict.get("repo")
+            or common_annotations.get("repo")
+            or common_labels.get("repo")
+        )
+
+        service_name = (
+            payload_dict.get("service_name")
+            or common_annotations.get("service_name")
+            or "unknown-service"
+        )
+
+        environment = (
+            payload_dict.get("environment")
+            or common_annotations.get("environment")
+            or "production"
+        )
+
+        severity = (
+            payload_dict.get("severity")
+            or common_labels.get("severity")
+            or "medium"
+        )
+
+        if not repo:
+            raise ValueError("Missing 'repo' in webhook payload. Format: org/repo-name")
+        if not summary:
+            raise ValueError("Missing 'summary' in webhook payload")
+
+        if not error_details:
+            error_details = body.decode(errors="replace")
+
+        issue_body = (
+            "## Webhook Error Details\n\n"
+            f"**Service:** {service_name}  \n"
+            f"**Environment:** {environment}  \n"
+            "**Timestamp:** *Auto-generated at webhook time*\n\n"
+            "### Error Details\n\n"
+            f"```\n{error_details}\n```\n"
+        )
+
+        github_service = GitHubService()
+        issue_result = github_service.create_issue_with_body(
+            repo_name=repo,
+            title=summary,
+            body=issue_body,
+            severity=severity,
+        )
+
+        return WebhookResponse(
+            status="success",
+            message=f"Issue created: #{issue_result.issue_number}",
+            issue_url=issue_result.issue_url,
+            issue_number=issue_result.issue_number,
+        )
+
+    except ValueError as e:
+        error_msg = str(e)
+        logger.error(f"Validation Error: {error_msg}")
+
+        return WebhookResponse(
+            status="error",
+            message="Validation failed",
+            error=error_msg,
+        )
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        logger.error(f"Error creating issue: {str(e)}", exc_info=True)
+
+        return WebhookResponse(
+            status="error",
+            message="Failed to create issue",
             error=str(e),
         )
 

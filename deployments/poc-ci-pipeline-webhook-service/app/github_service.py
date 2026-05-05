@@ -24,7 +24,7 @@ class GitHubService:
             "Content-Type": "application/json",
             "X-GitHub-Api-Version": "2022-11-28",
         }
-        self.assignee = Config.GITHUB_ASSIGNEE
+        self.assignee = Config.ASSIGNEE_GITHUB_ISSUE
 
     def create_issue(
         self,
@@ -84,8 +84,10 @@ class GitHubService:
             )
 
             if response.status_code == 403:
+                logger.error(f"GitHub 403 Forbidden - Body: {response.text}")
+                logger.error(f"GitHub 403 Headers: {dict(response.headers)}")
                 logger.error("GitHub API rate limited or authentication failed")
-                raise Exception("GitHub API access denied")
+                raise Exception(f"GitHub API access denied: {response.text}")
 
             if response.status_code == 404:
                 logger.error(f"Repository not found: {repo_name}")
@@ -94,6 +96,76 @@ class GitHubService:
             response.raise_for_status()
 
             # Parse response
+            issue_data = response.json()
+            issue_number = issue_data["number"]
+            issue_url = issue_data["html_url"]
+
+            logger.info(f"Successfully created issue #{issue_number}: {issue_url}")
+
+            return GitHubIssueResult(
+                issue_number=issue_number,
+                issue_url=issue_url,
+                assigned_to=self.assignee,
+            )
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Failed to create issue: {str(e)}")
+            if hasattr(e, "response") and e.response is not None:
+                logger.error(f"Response: {e.response.text}")
+            raise
+
+    def create_issue_with_body(
+        self,
+        repo_name: str,
+        title: str,
+        body: str,
+        severity: str = "medium",
+    ) -> GitHubIssueResult:
+        """
+        Create a GitHub issue with a custom title and body.
+
+        Args:
+            repo_name: Repository name in format 'org/repo'
+            title: Issue title
+            body: Issue body (markdown)
+            severity: Alert severity level
+
+        Returns:
+            GitHubIssueResult with issue details
+
+        Raises:
+            Exception: If issue creation fails
+        """
+        logger.info(f"Creating GitHub issue for {repo_name}")
+
+        url = f"{self.api_url}/repos/{repo_name}/issues"
+        payload = {
+            "title": title,
+            "body": body,
+            "labels": self._get_labels(severity),
+        }
+
+        if self.assignee:
+            payload["assignees"] = [self.assignee]
+            logger.info(f"Assigning issue to @{self.assignee}")
+
+        try:
+            response = requests.post(
+                url, headers=self.headers, json=payload, timeout=Config.TIMEOUT_FOR_GITHUB
+            )
+
+            if response.status_code == 403:
+                logger.error(f"GitHub 403 Forbidden - Body: {response.text}")
+                logger.error(f"GitHub 403 Headers: {dict(response.headers)}")
+                logger.error("GitHub API rate limited or authentication failed")
+                raise Exception(f"GitHub API access denied: {response.text}")
+
+            if response.status_code == 404:
+                logger.error(f"Repository not found: {repo_name}")
+                raise Exception(f"Repository not found: {repo_name}")
+
+            response.raise_for_status()
+
             issue_data = response.json()
             issue_number = issue_data["number"]
             issue_url = issue_data["html_url"]

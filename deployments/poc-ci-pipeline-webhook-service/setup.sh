@@ -15,7 +15,7 @@ if [ ! -f .env ]; then
     echo "IMPORTANT: Please edit .env and add your credentials:"
     echo "   - OPENAI_API_KEY (from https://platform.openai.com/api-keys)"
     echo "   - GITHUB_TOKEN (from https://github.com/settings/tokens)"
-    echo "   - GITHUB_ORG (your GitHub username for personal repos)"
+    echo "   - ORG_IN_GITHUB (your GitHub username for personal repos)"
     echo ""
     read -p "Press Enter after updating .env file..."
 fi

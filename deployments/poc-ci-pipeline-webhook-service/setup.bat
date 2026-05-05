@@ -17,7 +17,7 @@ if not exist .env (
     echo [IMPORTANT] Please edit .env and add your credentials:
     echo    - OPENAI_API_KEY (from https://platform.openai.com/api-keys)
     echo    - GITHUB_TOKEN (from https://github.com/settings/tokens)
-    echo    - GITHUB_ORG (your GitHub username for personal repos)
+    echo    - ORG_IN_GITHUB (your GitHub username for personal repos)
     echo.
     pause
 )
