@@ -258,9 +258,7 @@ async def create_issue_from_webhook(request: Request):
         )
 
         severity = (
-            payload_dict.get("severity")
-            or common_labels.get("severity")
-            or "medium"
+            payload_dict.get("severity") or common_labels.get("severity") or "medium"
         )
 
         if not repo:

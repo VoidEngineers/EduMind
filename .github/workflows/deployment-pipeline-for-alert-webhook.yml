@@ -182,8 +182,10 @@ jobs:
             docker run -d -p 8000:8000 --name=alert-to-issue-webhook \
               --restart unless-stopped \
               -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
-              -e GITHUB_TOKEN=${{ secrets.PERSONAL_GITHUB_TOKEN_VIKUM_CLASSIC }} \
-              -e ASSIGNEE_GITHUB_ISSUE=copilot \
+              -e GITHUB_TOKEN=${{ secrets.TKN_FOR_DUMMY_TESTING_REPO }} \
+              -e ORG_IN_GITHUB=${{ secrets.ORG_IN_GITHUB }} \
+              -e ASSIGNEE_GITHUB_ISSUE=${{ secrets.ASSIGNEE_GITHUB_ISSUE }} \
+              -e TIMEOUT_FOR_GITHUB=${{ secrets.TIMEOUT_FOR_GITHUB }} \
               -e OPENAI_MODEL=gpt-4o \
               -e OPENAI_TEMPERATURE=0.2 \
               -e LOG_LEVEL=INFO \

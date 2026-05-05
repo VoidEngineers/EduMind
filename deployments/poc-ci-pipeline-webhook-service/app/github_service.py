@@ -151,7 +151,10 @@ class GitHubService:
 
         try:
             response = requests.post(
-                url, headers=self.headers, json=payload, timeout=Config.TIMEOUT_FOR_GITHUB
+                url,
+                headers=self.headers,
+                json=payload,
+                timeout=Config.TIMEOUT_FOR_GITHUB,
             )
 
             if response.status_code == 403:
