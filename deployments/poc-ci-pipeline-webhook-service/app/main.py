@@ -100,6 +100,7 @@ async def handle_grafana_alert(request: Request):
 
         # Parse JSON body
         payload_dict = json.loads(body.decode())
+        logger.info(f"Request body:\n{json.dumps(payload_dict, indent=4)}")
         payload = GrafanaAlertPayload(**payload_dict)
 
         logger.info(f"Received Grafana alert: {payload.ruleName}")
@@ -217,6 +218,7 @@ async def create_issue_from_webhook(request: Request):
     try:
         body = await request.body()
         payload_dict = json.loads(body.decode())
+        logger.info(f"Request body:\n{json.dumps(payload_dict, indent=4)}")
 
         common_annotations = payload_dict.get("commonAnnotations", {}) or {}
         common_labels = payload_dict.get("commonLabels", {}) or {}
